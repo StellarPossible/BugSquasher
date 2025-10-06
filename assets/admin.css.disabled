@@ -1,0 +1,194 @@
+.bugsquasher-container {
+    max-width: 1200px;
+    margin: 20px 0;
+}
+
+.bugsquasher-controls {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ccd0d4;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.bugsquasher-info {
+    margin-left: auto;
+}
+
+.status-enabled {
+    color: #00a32a;
+    font-weight: bold;
+}
+
+.status-disabled, .status-not-found {
+    color: #d63638;
+    font-weight: bold;
+}
+
+.bugsquasher-filters {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ccd0d4;
+    margin-bottom: 20px;
+}
+
+.bugsquasher-filters h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.bugsquasher-filters label {
+    display: inline-block;
+    margin-right: 15px;
+    margin-bottom: 5px;
+}
+
+.bugsquasher-log-container {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    min-height: 400px;
+}
+
+#error-count {
+    padding: 10px 15px;
+    background: #f6f7f7;
+    border-bottom: 1px solid #ccd0d4;
+    font-weight: bold;
+}
+
+#log-content {
+    padding: 15px;
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-left: 4px solid #ccc;
+    background: #f9f9f9;
+}
+
+.log-entry.fatal {
+    border-left-color: #d63638;
+    background: #fef2f2;
+}
+
+.log-entry.parse {
+    border-left-color: #d63638;
+    background: #fef2f2;
+}
+
+.log-entry.critical {
+    border-left-color: #d63638;
+    background: #fef2f2;
+}
+
+.log-entry.warning {
+    border-left-color: #f56e28;
+    background: #fef7f0;
+}
+
+.log-entry.notice {
+    border-left-color: #007cba;
+    background: #f0f8ff;
+}
+
+.log-entry.deprecated {
+    border-left-color: #8c8f94;
+    background: #f6f7f7;
+}
+
+.log-entry.firewall {
+    border-left-color: #d63638;
+    background: #fef2f2;
+}
+
+.log-entry.cron {
+    border-left-color: #dba617;
+    background: #fffbf0;
+}
+
+.log-entry.info {
+    border-left-color: #72aee6;
+    background: #f0f6fc;
+}
+
+.log-entry.error {
+    border-left-color: #dba617;
+    background: #fffbf0;
+}
+
+.log-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 11px;
+    color: #666;
+}
+
+.log-entry-type {
+    background: #666;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.log-entry-type.fatal,
+.log-entry-type.parse,
+.log-entry-type.critical,
+.log-entry-type.firewall {
+    background: #d63638;
+}
+
+.log-entry-type.warning {
+    background: #f56e28;
+}
+
+.log-entry-type.notice {
+    background: #007cba;
+}
+
+.log-entry-type.deprecated {
+    background: #8c8f94;
+}
+
+.log-entry-type.info {
+    background: #72aee6;
+}
+
+.log-entry-type.cron,
+.log-entry-type.error {
+    background: #dba617;
+}
+
+.log-entry-message {
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+
+.no-errors {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.no-errors .dashicons {
+    font-size: 48px;
+    margin-bottom: 10px;
+    color: #00a32a;
+}
+
+#loading {
+    text-align: center;
+    padding: 40px;
+}
