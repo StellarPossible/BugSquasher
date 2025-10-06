@@ -2,10 +2,10 @@
 
 /**
  * Plugin Name: BugSquasher
- * Plugin URI: https://developmentpct.com
+ * Plugin URI: https://stellarpossible.com
  * Description: A simple plugin to filter WordPress debug.log files and show only errors, excluding notices, warnings, and deprecated messages.
  * Version: 1.0.1
- * Author: PCT Development
+ * Author: StellarPossible LLC
  * License: GPL v2 or later
  * Text Domain: bugsquasher
  */
@@ -323,8 +323,8 @@ class BugSquasher
                     
                     <div class="bugsquasher-info">
                         <?php
-                        $debug_log = WP_CONTENT_DIR . '/debug.log';
-                        if (file_exists($debug_log)) {
+                        $debug_log = $this->get_debug_log_path();
+                        if ($debug_log && file_exists($debug_log)) {
                             $size = filesize($debug_log);
                             $size_formatted = size_format($size);
                             echo '<span class="status-enabled">Debug log found (' . $size_formatted . ')</span>';
@@ -336,11 +336,20 @@ class BugSquasher
                                 echo '<br><small>Log Errors: ' . (ini_get('log_errors') ? 'On' : 'Off') . '</small>';
                             }
                         } else {
-                            echo '<span class="status-not-found">Debug log not found</span>';
-                            if (defined('WP_DEBUG') && WP_DEBUG) {
-                                echo '<br><small>WP_DEBUG: Enabled | Looking at: ' . $debug_log . '</small>';
-                                echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
-                                echo '<br><small>Check your wp-config.php settings</small>';
+                            if (!$debug_log) {
+                                echo '<span class="status-not-found">Debug log not configured</span>';
+                                if (defined('WP_DEBUG') && WP_DEBUG) {
+                                    echo '<br><small>WP_DEBUG: Enabled</small>';
+                                    echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
+                                    echo '<br><small>Set WP_DEBUG_LOG to true in wp-config.php to enable logging</small>';
+                                }
+                            } else {
+                                echo '<span class="status-not-found">Debug log not found</span>';
+                                if (defined('WP_DEBUG') && WP_DEBUG) {
+                                    echo '<br><small>WP_DEBUG: Enabled | Expected at: ' . $debug_log . '</small>';
+                                    echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
+                                    echo '<br><small>Check your wp-config.php settings</small>';
+                                }
                             }
                         }
                         ?>
@@ -351,11 +360,14 @@ class BugSquasher
                     <h3>Filter by Error Type</h3>
                     <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
                     <label><input type="checkbox" class="error-type-filter" value="parse" checked> Parse Errors</label>
+                    <label><input type="checkbox" class="error-type-filter" value="critical" checked> Critical</label>
+                    <label><input type="checkbox" class="error-type-filter" value="error" checked> Errors</label>
                     <label><input type="checkbox" class="error-type-filter" value="warning" checked> Warnings</label>
                     <label><input type="checkbox" class="error-type-filter" value="notice" checked> Notices</label>
                     <label><input type="checkbox" class="error-type-filter" value="deprecated" checked> Deprecated</label>
                     <label><input type="checkbox" class="error-type-filter" value="firewall" checked> Firewall</label>
                     <label><input type="checkbox" class="error-type-filter" value="cron" checked> Cron</label>
+                    <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
                 </div>
                 
                 <div class="bugsquasher-log-container">
@@ -511,15 +523,15 @@ class BugSquasher
      */
     private function parse_debug_log($max_lines = 100)
     {
-        $log_file = WP_CONTENT_DIR . '/debug.log';
+        $log_file = $this->get_debug_log_path();
         
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('BugSquasher: Looking for debug log at: ' . $log_file);
+            error_log('BugSquasher: Looking for debug log at: ' . ($log_file ?: 'not configured'));
         }
         
-        if (!file_exists($log_file)) {
+        if (!$log_file || !file_exists($log_file)) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('BugSquasher: Debug log file does not exist');
+                error_log('BugSquasher: Debug log file not configured or does not exist');
             }
             return [];
         }
