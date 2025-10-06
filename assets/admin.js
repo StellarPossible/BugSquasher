@@ -4,43 +4,24 @@ jQuery(document).ready(function($) {
     loadErrors();
 
     /**
-     * Load errors from server
+     * Update error count display
      */
-    function loadErrors() {
-        console.log('BugSquasher: Starting to load errors...');
-        $('#loading').show();
-        $('#log-content').hide();
-        
-        var limit = $('#error-limit').val() || 50;
-        console.log('BugSquasher: Loading', limit, 'recent errors');
-        
-        $.ajax({
-            url: bugsquasher_ajax.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'bugsquasher_get_errors',
-                nonce: bugsquasher_ajax.nonce,
-                limit: limit
-            },
-            success: function(response) {
-                console.log('BugSquasher: AJAX response received:', response);
-                $('#loading').hide();
-                
-                if (response.success) {
-                    console.log('BugSquasher: Success! Found', response.data.errors.length, 'errors');
-                    displayErrors(response.data.errors);
-                    updateErrorCount(response.data.count);
-                } else {
-                    console.error('BugSquasher: Error response:', response.data);
-                    $('#log-content').html('<div class="notice notice-error"><p>Error: ' + escapeHtml(response.data) + '</p></div>').show();
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('BugSquasher: AJAX error:', {xhr: xhr, status: status, error: error});
-                $('#loading').hide();
-                $('#log-content').html('<div class="notice notice-error"><p>Failed to load errors: ' + escapeHtml(error) + '</p></div>').show();
-            }
-        });
+    function updateErrorCount(count) {
+        console.log('BugSquasher: Updating error count to', count);
+        $('#error-count').text('Found ' + count + ' errors');
+    }
+
+    /**
+     * Escape HTML characters
+     */
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     /**
@@ -57,6 +38,7 @@ jQuery(document).ready(function($) {
         }
         
         if (errors.length === 0) {
+            console.log('BugSquasher: No errors to display');
             $container.html(
                 '<div class="no-errors">' +
                 '<div class="dashicons dashicons-yes-alt"></div>' +
@@ -70,6 +52,7 @@ jQuery(document).ready(function($) {
         
         var html = '';
         $.each(errors, function(index, error) {
+            console.log('BugSquasher: Processing error', index, ':', error);
             html += '<div class="log-entry ' + error.type + '" data-type="' + error.type + '">';
             html += '<div class="log-entry-header">';
             html += '<span class="log-entry-type ' + error.type + '">' + error.type.toUpperCase() + '</span>';
@@ -86,6 +69,82 @@ jQuery(document).ready(function($) {
         console.log('BugSquasher: Errors displayed successfully');
     }
 
+    /**
+     * Load errors from server
+     */
+    function loadErrors() {
+        console.log('BugSquasher: Starting to load errors...');
+        $('#loading').show();
+        $('#log-content').hide();
+        
+        // Get selected limit
+        var limit = $('#error-limit').val() || 50;
+        console.log('BugSquasher: Loading', limit, 'recent errors');
+        
+        console.log('BugSquasher: AJAX URL:', bugsquasher_ajax.ajax_url);
+        console.log('BugSquasher: Nonce:', bugsquasher_ajax.nonce);
+        
+        $.ajax({
+            url: bugsquasher_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'bugsquasher_get_errors',
+                nonce: bugsquasher_ajax.nonce,
+                limit: limit
+            },
+            success: function(response) {
+                console.log('BugSquasher: AJAX response received:', response);
+                $('#loading').hide();
+                
+                if (response.success) {
+                    console.log('BugSquasher: Success! Found', response.data.errors.length, 'errors');
+                    if (response.data.cached) {
+                        console.log('BugSquasher: Results loaded from cache');
+                    }
+                    displayErrors(response.data.errors);
+                    updateErrorCount(response.data.count);
+                    
+                    // Show cache status
+                    if (response.data.cached) {
+                        $('#error-count').append(' <span style="color: #72aee6;">(cached)</span>');
+                    }
+                } else {
+                    console.error('BugSquasher: Error response:', response.data);
+                    $('#log-content').html('<div class="notice notice-error"><p>Error: ' + escapeHtml(response.data) + '</p></div>').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('BugSquasher: AJAX error:', {xhr: xhr, status: status, error: error});
+                $('#loading').hide();
+                $('#log-content').html('<div class="notice notice-error"><p>Failed to load errors: ' + escapeHtml(error) + '</p></div>').show();
+            }
+        });
+    }
+
+    /**
+     * Clear debug log
+     */
+    function clearLog() {
+        $.ajax({
+            url: bugsquasher_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'bugsquasher_clear_log',
+                nonce: bugsquasher_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Debug log cleared successfully!');
+                    loadErrors();
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            },
+            error: function() {
+                alert('Failed to clear debug log.');
+            }
+        });
+    }
 
     /**
      * Export errors to a text file
@@ -96,10 +155,9 @@ jQuery(document).ready(function($) {
             var $entry = $(this);
             var type = $entry.find('.log-entry-type').text();
             var timestamp = $entry.find('.log-entry-timestamp').text();
-            var lineNumber = $entry.find('.log-entry-line').text();
             var message = $entry.find('.log-entry-message').text();
             
-            errors.push(type.toUpperCase() + ' | ' + timestamp + ' | ' + lineNumber + ' | ' + message);
+            errors.push(type + ' | ' + timestamp + ' | ' + message);
         });
         
         if (errors.length === 0) {
@@ -125,19 +183,7 @@ jQuery(document).ready(function($) {
     }
 
     /**
-     * Escape HTML characters
-     */
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    /**
-     * Filter errors based on selected checkboxes
+     * Filter errors by type
      */
     function filterErrors() {
         var checkedTypes = [];
