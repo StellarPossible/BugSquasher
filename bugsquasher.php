@@ -340,6 +340,34 @@ class BugSquasher
         <style type="text/css">
             /* BugSquasher Admin Styles - Embedded to avoid MIME issues */
             
+            /* Dashboard Header Styles */
+            .bugsquasher-dashboard-header {
+                margin-bottom: 20px;
+            }
+            
+            .bugsquasher-dashboard-header h1.wp-heading-inline {
+                font-size: 23px;
+                font-weight: 400;
+                margin: 0;
+                padding: 9px 0 4px 0;
+                line-height: 1.3;
+            }
+            
+            .bugsquasher-dashboard-header .wp-header-end {
+                border: 0;
+                height: 0;
+                margin: -4px 0 16px;
+            }
+            
+            /* App Wrapper Styles */
+            .bugsquasher-app-wrapper {
+                background: #f1f1f1;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+                padding: 20px;
+                margin-top: 10px;
+            }
+            
             /* Header and Logo Styles */
             .bugsquasher-header {
                 color: white;
@@ -826,19 +854,27 @@ class BugSquasher
         </style>
 
         <div class="wrap">
-            <!-- Toast Container -->
-            <div class="bugsquasher-toast-container" id="toast-container"></div>
+            <!-- Dashboard Header -->
+            <div class="bugsquasher-dashboard-header">
+                <h1 class="wp-heading-inline">BugSquasher Dashboard</h1>
+                <hr class="wp-header-end">
+            </div>
 
-            <div class="bugsquasher-container">
-                <div class="bugsquasher-header">
-                    <div class="bugsquasher-logo-container">
-                        <img src="<?php echo BUGSQUASHER_PLUGIN_URL; ?>assets/images/BugSquasherLogo.svg" alt="BugSquasher Logo" class="bugsquasher-logo">
-                        <div class="bugsquasher-title-section">
-                            <h1>BugSquasher</h1>
-                            <p class="bugsquasher-subtitle">WordPress Debug Log Analyzer</p>
+            <!-- BugSquasher App Wrapper -->
+            <div class="bugsquasher-app-wrapper">
+                <!-- Toast Container -->
+                <div class="bugsquasher-toast-container" id="toast-container"></div>
+
+                <div class="bugsquasher-container">
+                    <div class="bugsquasher-header">
+                        <div class="bugsquasher-logo-container">
+                            <img src="<?php echo BUGSQUASHER_PLUGIN_URL; ?>assets/images/BugSquasherLogo.svg" alt="BugSquasher Logo" class="bugsquasher-logo">
+                            <div class="bugsquasher-title-section">
+                                <h1>BugSquasher</h1>
+                                <p class="bugsquasher-subtitle">WordPress Debug Log Analyzer</p>
+                            </div>
                         </div>
                     </div>
-                </div>
                 <div class="bugsquasher-controls">
                     <button id="load-errors" class="button button-primary">Load Recent Errors</button>
                     <select id="error-limit">
@@ -1063,7 +1099,9 @@ class BugSquasher
                     </div>
                 </div>
             </div>
+            <!-- End BugSquasher App Wrapper -->
         </div>
+        <!-- End Dashboard Header Wrap -->
 <?php
     }
 
