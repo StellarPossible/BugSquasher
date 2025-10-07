@@ -308,6 +308,28 @@ jQuery(document).ready(function($) {
         const setting = $toggle.attr('id').replace('-toggle', '').replace(/-/g, '_').toUpperCase();
         const value = $toggle.is(':checked');
         
+        // Check if the toggle is disabled (permissions issue)
+        if ($toggle.prop('disabled')) {
+            e.preventDefault();
+            $toggle.prop('checked', !value); // Revert the change
+            showToast('wp-config.php permissions prevent debug setting modification.', 'error');
+            return false;
+        }
+        
+        // Check for development environment confirmation if required
+        const $devConfirm = $('#dev-environment-confirm');
+        if ($devConfirm.length && !$devConfirm.is(':checked')) {
+            e.preventDefault();
+            $toggle.prop('checked', !value); // Revert the change
+            showToast('Please confirm this is a development environment before modifying debug settings.', 'error');
+            // Highlight the confirmation checkbox
+            $devConfirm.closest('div').css('border', '2px solid #d63638').css('border-radius', '4px');
+            setTimeout(() => {
+                $devConfirm.closest('div').css('border', '').css('border-radius', '');
+            }, 3000);
+            return false;
+        }
+        
         // Check if this is WP_DEBUG_DISPLAY and WP_DEBUG is not enabled
         if (setting === 'WP_DEBUG_DISPLAY' && !$('#wp-debug-toggle').is(':checked')) {
             e.preventDefault();

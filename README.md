@@ -23,10 +23,44 @@ BugSquasher is a lightweight WordPress plugin designed to help developers quickl
 
 * **Clean Interface**: View filtered errors in a clean, organized admin interface
 * **Real-time Filtering**: Toggle different error types on/off
+* **Smart Debug Settings Control**: Toggle WP_DEBUG, WP_DEBUG_LOG, and WP_DEBUG_DISPLAY with environment-aware security
+* **Production Security**: Automatically disables debug modification in production environments
+* **Environment Detection**: Automatically detects development, staging, and production environments
 * **Export Functionality**: Export filtered errors to a text file
 * **Log Management**: Clear debug logs directly from the interface
 * **File Size Monitoring**: See debug log file size at a glance
+* **Comprehensive Log Categorization**: All logs are categorized (Fatal, Parse, Warning, Notice, Deprecated, Critical, Firewall, Cron, Error, Info)
 * **No Database Storage**: Works directly with your debug.log file
+* **Docker Support**: Automatic detection and helpful commands for Docker environments
+* **Security Hardening**: Multiple layers of security protection for production environments
+
+== Security Features ==
+
+### Environment-Aware Protection
+* **Permission-Based Detection**: Uses wp-config.php file permissions as primary production indicator
+* **Secure by Default**: 644 permissions automatically indicate production environment
+* **Development Confirmation**: Requires explicit confirmation for writable wp-config.php files
+* **Multi-factor Environment Detection**: Combines file permissions with domain patterns, SSL status, and debug settings
+
+### Debug Toggle Security
+* **Production Lockdown**: Debug setting modification automatically disabled when wp-config.php has secure permissions (644/600)
+* **Development Confirmation**: Requires user confirmation before allowing debug modifications on writable files
+* **Permission Validation**: Real-time display of current file permissions and security status
+* **Clear Instructions**: Provides specific chmod commands for proper permission setup
+* **Audit Logging**: All debug setting changes are logged with user information
+* **Backup Protection**: Automatic backup creation before modifying wp-config.php
+
+### Permission-Based Security Levels
+* **644 (Secure)**: Production environment - debug toggles disabled
+* **600 (Very Secure)**: High-security production - debug toggles disabled  
+* **664 (Development)**: Development mode - debug toggles available with confirmation
+* **666 (Unsafe)**: Requires user confirmation and warnings about security risks
+
+### Access Control
+* **Admin-Only Access**: Requires 'manage_options' capability
+* **Nonce Protection**: All AJAX requests protected with WordPress nonces
+* **Rate Limiting**: Prevents abuse with configurable rate limiting
+* **Environment Validation**: Multiple checks to ensure safe operation context
 
 == Installation ==
 
@@ -40,6 +74,102 @@ BugSquasher is a lightweight WordPress plugin designed to help developers quickl
 * PHP 8.1 or higher  
 * WordPress debug logging must be enabled (WP_DEBUG_LOG = true)
 * User must have 'manage_options' capability
+* For debug toggle functionality: wp-config.php must be writable
+
+## **Production Deployment Best Practices:**
+
+### For Maximum Security Hardening:
+
+1. **Set Secure wp-config.php Permissions (Recommended for Production):**
+   ```bash
+   chmod 644 wp-config.php
+   chown root:www-data wp-config.php  # If possible
+   ```
+   This automatically disables debug toggles and indicates production environment.
+
+2. **Development Environment Setup:**
+   ```bash
+   chmod 664 wp-config.php  # Makes file writable for debug toggles
+   ```
+
+3. **Set Environment Variables:**
+   ```php
+   // In wp-config.php for production
+   define('WP_ENV', 'production');
+   define('WP_DEBUG', false);
+   define('WP_DEBUG_LOG', false);
+   define('WP_DEBUG_DISPLAY', false);
+   ```
+
+4. **Development/Staging Setup:**
+   ```php
+   // In wp-config.php for development
+   define('WP_ENV', 'development');
+   define('WP_DEBUG', true);
+   define('WP_DEBUG_LOG', true);
+   define('WP_DEBUG_DISPLAY', true);
+   ```
+
+### Security Recommendations:
+
+- **Use 644 permissions in production** to automatically disable debug toggles
+- **Use 664 permissions in development** to enable debug toggle functionality
+- **Always confirm environment type** when prompted by the plugin
+- **Monitor file permissions** - the plugin displays current wp-config.php permissions
+- **Use staging environments** for debug testing and development
+- **Keep file permissions restrictive** (644 for files, 755 for directories) in production
+
+### Permission Quick Reference:
+- **644**: Read-only, production-safe, debug toggles disabled
+- **664**: Writable, development-friendly, debug toggles available (with confirmation)
+- **600**: Very secure, production-safe, debug toggles disabled  
+- **666**: Unsafe, requires explicit confirmation
+
+## **Troubleshooting**
+
+### Debug Toggles Not Working
+
+If you see "wp-config.php is not writable" in the debug controls section:
+
+**For Docker Environments:**
+```bash
+# Find your container name
+docker ps
+
+# Fix permissions (replace <container> with your actual container name)
+docker exec -it <container> chown www-data:www-data /var/www/html/wp-config.php
+docker exec -it <container> chmod 664 /var/www/html/wp-config.php
+```
+
+**For Standard Hosting:**
+```bash
+# Via SSH (if you have access)
+chmod 664 /path/to/your/wp-config.php
+
+# Or contact your hosting provider to adjust file permissions
+```
+
+**For Local Development:**
+```bash
+chmod 664 /path/to/your/wordpress/wp-config.php
+```
+
+### No Logs Appearing
+
+1. Ensure WP_DEBUG and WP_DEBUG_LOG are enabled in wp-config.php:
+   ```php
+   define('WP_DEBUG', true);
+   define('WP_DEBUG_LOG', true);
+   ```
+
+2. Check that the debug.log file exists and has content:
+   ```
+   /wp-content/debug.log
+   ```
+
+3. Generate some errors to test:
+   - Try accessing a non-existent page
+   - Temporarily add invalid PHP code to a theme file
 
 == Developer Information ==
 
