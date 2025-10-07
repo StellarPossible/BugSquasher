@@ -4,7 +4,7 @@
  * Plugin Name: BugSquasher
  * Plugin URI: https://stellarpossible.com
  * Description: A simple plugin to filter WordPress debug.log files and show only errors, excluding notices, warnings, and deprecated messages.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: StellarPossible LLC
  * License: GPL v2 or later
  * Text Domain: bugsquasher
@@ -16,16 +16,52 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('BUGSQUASHER_VERSION', '1.0.1');
+define('BUGSQUASHER_VERSION', '1.1.0');
 define('BUGSQUASHER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BUGSQUASHER_PLUGIN_URL', plugin_dir_url(__FILE__));
+
+/**
+ * Configuration Class
+ */
+class BugSquasher_Config
+{
+    private static $default_settings = [
+        'timezone' => 'UTC',
+        'date_format' => 'Y-m-d H:i:s',
+        'display_timezone' => true,
+        'export_format' => 'detailed',
+        'max_errors_display' => 25,
+        'cache_duration' => 300,
+        'error_types_default' => ['fatal', 'parse', 'critical'],
+        'timestamp_conversion' => true,
+        'rate_limit_requests' => 10,
+        'rate_limit_window' => 60
+    ];
+
+    public static function get_setting($key, $default = null)
+    {
+        $settings = get_option('bugsquasher_settings', self::$default_settings);
+        return isset($settings[$key]) ? $settings[$key] : ($default !== null ? $default : self::$default_settings[$key]);
+    }
+
+    public static function save_settings($new_settings)
+    {
+        $current = get_option('bugsquasher_settings', self::$default_settings);
+        $updated = array_merge($current, $new_settings);
+        return update_option('bugsquasher_settings', $updated);
+    }
+
+    public static function get_default_settings()
+    {
+        return self::$default_settings;
+    }
+}
 
 /**
  * Main BugSquasher Class
  */
 class BugSquasher
 {
-
     public function __construct()
     {
         add_action('init', array($this, 'init'));
@@ -36,15 +72,26 @@ class BugSquasher
         // Add admin menu
         add_action('admin_menu', array($this, 'add_admin_menu'));
 
+        // Register settings
+        add_action('admin_init', array($this, 'register_settings'));
+
         // Enqueue admin scripts and styles
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
-        
+
         // Prevent any CSS from being auto-loaded for our plugin
         add_action('admin_enqueue_scripts', array($this, 'prevent_css_loading'), 999);
 
         // AJAX handlers
         add_action('wp_ajax_bugsquasher_get_errors', array($this, 'ajax_get_errors'));
         add_action('wp_ajax_bugsquasher_clear_log', array($this, 'ajax_clear_log'));
+    }
+
+    /**
+     * Register settings with WordPress
+     */
+    public function register_settings()
+    {
+        register_setting('bugsquasher_settings', 'bugsquasher_settings');
     }
 
     /**
@@ -59,6 +106,178 @@ class BugSquasher
             'bugsquasher',
             array($this, 'admin_page')
         );
+
+        // Add settings submenu
+        add_submenu_page(
+            'bugsquasher',
+            'BugSquasher Settings',
+            'Settings',
+            'manage_options',
+            'bugsquasher-settings',
+            array($this, 'settings_page')
+        );
+    }
+
+    /**
+     * Settings page implementation
+     */
+    public function settings_page()
+    {
+        // Handle form submission
+        if (isset($_POST['submit']) && wp_verify_nonce($_POST['bugsquasher_settings_nonce'], 'bugsquasher_settings')) {
+            $new_settings = [
+                'timezone' => sanitize_text_field($_POST['timezone']),
+                'date_format' => sanitize_text_field($_POST['date_format']),
+                'display_timezone' => isset($_POST['display_timezone']),
+                'timestamp_conversion' => isset($_POST['timestamp_conversion']),
+                'max_errors_display' => intval($_POST['max_errors_display']),
+                'cache_duration' => intval($_POST['cache_duration']),
+                'export_format' => sanitize_text_field($_POST['export_format'])
+            ];
+
+            BugSquasher_Config::save_settings($new_settings);
+            echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
+        }
+
+        $current_settings = get_option('bugsquasher_settings', BugSquasher_Config::get_default_settings());
+?>
+        <div class="wrap">
+            <h1>BugSquasher Settings</h1>
+
+            <form method="post" action="">
+                <?php wp_nonce_field('bugsquasher_settings', 'bugsquasher_settings_nonce'); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">Timezone</th>
+                        <td>
+                            <select name="timezone">
+                                <?php
+                                $timezones = [
+                                    'UTC' => 'UTC',
+                                    'America/New_York' => 'Eastern Time',
+                                    'America/Chicago' => 'Central Time',
+                                    'America/Denver' => 'Mountain Time',
+                                    'America/Los_Angeles' => 'Pacific Time',
+                                    'Europe/London' => 'London',
+                                    'Europe/Paris' => 'Paris',
+                                    'Asia/Tokyo' => 'Tokyo',
+                                    'Australia/Sydney' => 'Sydney'
+                                ];
+                                foreach ($timezones as $value => $label) {
+                                    $selected = ($current_settings['timezone'] === $value) ? 'selected' : '';
+                                    echo "<option value=\"$value\" $selected>$label</option>";
+                                }
+                                ?>
+                            </select>
+                            <p class="description">Select your preferred timezone for displaying timestamps.</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">Date Format</th>
+                        <td>
+                            <select name="date_format">
+                                <?php
+                                $formats = [
+                                    'Y-m-d H:i:s' => 'YYYY-MM-DD HH:MM:SS',
+                                    'm/d/Y g:i A' => 'MM/DD/YYYY H:MM AM/PM',
+                                    'd/m/Y H:i' => 'DD/MM/YYYY HH:MM',
+                                    'M j, Y g:i A' => 'Mon DD, YYYY H:MM AM/PM',
+                                    'c' => 'ISO 8601 Format'
+                                ];
+                                foreach ($formats as $value => $label) {
+                                    $selected = ($current_settings['date_format'] === $value) ? 'selected' : '';
+                                    $example = date($value);
+                                    echo "<option value=\"$value\" $selected>$label ($example)</option>";
+                                }
+                                ?>
+                            </select>
+                            <p class="description">Choose how timestamps should be formatted.</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">Display Options</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="display_timezone" value="1" <?php checked($current_settings['display_timezone']); ?>>
+                                Show timezone in timestamps
+                            </label><br>
+
+                            <label>
+                                <input type="checkbox" name="timestamp_conversion" value="1" <?php checked($current_settings['timestamp_conversion']); ?>>
+                                Convert timestamps to selected timezone
+                            </label>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">Default Errors to Display</th>
+                        <td>
+                            <input type="number" name="max_errors_display" value="<?php echo esc_attr($current_settings['max_errors_display']); ?>" min="10" max="500">
+                            <p class="description">Number of errors to display by default (10-500).</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">Cache Duration</th>
+                        <td>
+                            <input type="number" name="cache_duration" value="<?php echo esc_attr($current_settings['cache_duration']); ?>" min="60" max="3600">
+                            <p class="description">How long to cache results (in seconds, 60-3600).</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">Export Format</th>
+                        <td>
+                            <select name="export_format">
+                                <option value="detailed" <?php selected($current_settings['export_format'], 'detailed'); ?>>Detailed (with timestamps)</option>
+                                <option value="compact" <?php selected($current_settings['export_format'], 'compact'); ?>>Compact (messages only)</option>
+                            </select>
+                            <p class="description">Choose the format for exported error logs.</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <?php submit_button(); ?>
+            </form>
+        </div>
+    <?php
+    }
+
+    /**
+     * Enhanced timestamp formatting
+     */
+    private function format_timestamp($raw_timestamp)
+    {
+        $timezone = BugSquasher_Config::get_setting('timezone', 'UTC');
+        $format = BugSquasher_Config::get_setting('date_format', 'Y-m-d H:i:s');
+        $convert_timezone = BugSquasher_Config::get_setting('timestamp_conversion', true);
+        $display_timezone = BugSquasher_Config::get_setting('display_timezone', true);
+
+        if (!$convert_timezone) {
+            return $raw_timestamp;
+        }
+
+        try {
+            // Parse the WordPress debug log timestamp format
+            $dt = DateTime::createFromFormat('d-M-Y H:i:s T', $raw_timestamp);
+            if ($dt) {
+                $dt->setTimezone(new DateTimeZone($timezone));
+                $formatted = $dt->format($format);
+
+                if ($display_timezone) {
+                    $formatted .= ' ' . $dt->format('T');
+                }
+
+                return $formatted;
+            }
+        } catch (Exception $e) {
+            error_log('BugSquasher: Timestamp conversion error: ' . $e->getMessage());
+        }
+
+        return $raw_timestamp; // Fallback to original
     }
 
     /**
@@ -77,7 +296,7 @@ class BugSquasher
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('bugsquasher_nonce')
         ));
-        
+
         // Explicitly remove any potential CSS that might be auto-enqueued
         wp_deregister_style('bugsquasher-admin');
         wp_deregister_style('bugsquasher');
@@ -91,7 +310,7 @@ class BugSquasher
         if ($hook !== 'tools_page_bugsquasher') {
             return;
         }
-        
+
         // Remove any potential CSS files that WordPress might try to auto-load
         global $wp_styles;
         if (isset($wp_styles->registered['bugsquasher-admin'])) {
@@ -107,220 +326,225 @@ class BugSquasher
      */
     public function admin_page()
     {
-        ?>
+    ?>
         <style type="text/css">
-        /* BugSquasher Admin Styles - Embedded to avoid MIME issues */
-        .bugsquasher-container {
-            max-width: 1200px;
-            margin: 20px 0;
-        }
+            /* BugSquasher Admin Styles - Embedded to avoid MIME issues */
+            .bugsquasher-container {
+                max-width: 1200px;
+                margin: 20px 0;
+            }
 
-        .bugsquasher-controls {
-            background: #fff;
-            padding: 15px;
-            border: 1px solid #ccd0d4;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+            .bugsquasher-controls {
+                background: #fff;
+                padding: 15px;
+                border: 1px solid #ccd0d4;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
 
-        .bugsquasher-info {
-            margin-left: auto;
-        }
+            .bugsquasher-info {
+                margin-left: auto;
+            }
 
-        .status-enabled {
-            color: #00a32a;
-            font-weight: bold;
-        }
+            .status-enabled {
+                color: #00a32a;
+                font-weight: bold;
+            }
 
-        .status-disabled, .status-not-found {
-            color: #d63638;
-            font-weight: bold;
-        }
+            .status-disabled,
+            .status-not-found {
+                color: #d63638;
+                font-weight: bold;
+            }
 
-        .bugsquasher-filters {
-            background: #fff;
-            padding: 15px;
-            border: 1px solid #ccd0d4;
-            margin-bottom: 20px;
-        }
+            .bugsquasher-filters {
+                background: #fff;
+                padding: 15px;
+                border: 1px solid #ccd0d4;
+                margin-bottom: 20px;
+            }
 
-        .bugsquasher-filters h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
+            .bugsquasher-filters h3 {
+                margin-top: 0;
+                margin-bottom: 10px;
+            }
 
-        .bugsquasher-filters label {
-            display: inline-block;
-            margin-right: 15px;
-            margin-bottom: 5px;
-        }
+            .bugsquasher-filters label {
+                display: inline-block;
+                margin-right: 15px;
+                margin-bottom: 5px;
+            }
 
-        .bugsquasher-log-container {
-            background: #fff;
-            border: 1px solid #ccd0d4;
-            min-height: 400px;
-        }
+            .bugsquasher-log-container {
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                min-height: 400px;
+            }
 
-        #error-count {
-            padding: 10px 15px;
-            background: #f6f7f7;
-            border-bottom: 1px solid #ccd0d4;
-            font-weight: bold;
-        }
+            #error-count {
+                padding: 10px 15px;
+                background: #f6f7f7;
+                border-bottom: 1px solid #ccd0d4;
+                font-weight: bold;
+            }
 
-        #log-content {
-            padding: 15px;
-            font-family: monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            max-height: 600px;
-            overflow-y: auto;
-        }
+            #log-content {
+                padding: 15px;
+                font-family: monospace;
+                font-size: 13px;
+                line-height: 1.5;
+                max-height: 600px;
+                overflow-y: auto;
+            }
 
-        .log-entry {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-left: 4px solid #ccc;
-            background: #f9f9f9;
-        }
+            .log-entry {
+                margin-bottom: 15px;
+                padding: 10px;
+                border-left: 4px solid #ccc;
+                background: #f9f9f9;
+            }
 
-        .log-entry.fatal {
-            border-left-color: #d63638;
-            background: #fef2f2;
-        }
+            .log-entry.fatal {
+                border-left-color: #d63638;
+                background: #fef2f2;
+            }
 
-        .log-entry.parse {
-            border-left-color: #d63638;
-            background: #fef2f2;
-        }
+            .log-entry.parse {
+                border-left-color: #d63638;
+                background: #fef2f2;
+            }
 
-        .log-entry.critical {
-            border-left-color: #d63638;
-            background: #fef2f2;
-        }
+            .log-entry.critical {
+                border-left-color: #d63638;
+                background: #fef2f2;
+            }
 
-        .log-entry.warning {
-            border-left-color: #f56e28;
-            background: #fef7f0;
-        }
+            .log-entry.warning {
+                border-left-color: #f56e28;
+                background: #fef7f0;
+            }
 
-        .log-entry.notice {
-            border-left-color: #007cba;
-            background: #f0f8ff;
-        }
+            .log-entry.notice {
+                border-left-color: #007cba;
+                background: #f0f8ff;
+            }
 
-        .log-entry.deprecated {
-            border-left-color: #8c8f94;
-            background: #f6f7f7;
-        }
+            .log-entry.deprecated {
+                border-left-color: #8c8f94;
+                background: #f6f7f7;
+            }
 
-        .log-entry.firewall {
-            border-left-color: #d63638;
-            background: #fef2f2;
-        }
+            .log-entry.firewall {
+                border-left-color: #d63638;
+                background: #fef2f2;
+            }
 
-        .log-entry.cron {
-            border-left-color: #dba617;
-            background: #fffbf0;
-        }
+            .log-entry.cron {
+                border-left-color: #dba617;
+                background: #fffbf0;
+            }
 
-        .log-entry.info {
-            border-left-color: #72aee6;
-            background: #f0f6fc;
-        }
+            .log-entry.info {
+                border-left-color: #72aee6;
+                background: #f0f6fc;
+            }
 
-        .log-entry.error {
-            border-left-color: #dba617;
-            background: #fffbf0;
-        }
+            .log-entry.error {
+                border-left-color: #dba617;
+                background: #fffbf0;
+            }
 
-        .log-entry-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-            font-size: 11px;
-            color: #666;
-        }
+            .log-entry-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 5px;
+                font-size: 11px;
+                color: #666;
+            }
 
-        .log-entry-type {
-            background: #666;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            text-transform: uppercase;
-        }
+            .log-entry-type {
+                background: #666;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 10px;
+                text-transform: uppercase;
+            }
 
-        .log-entry-type.fatal,
-        .log-entry-type.parse,
-        .log-entry-type.critical,
-        .log-entry-type.firewall {
-            background: #d63638;
-        }
+            .log-entry-type.fatal,
+            .log-entry-type.parse,
+            .log-entry-type.critical,
+            .log-entry-type.firewall {
+                background: #d63638;
+            }
 
-        .log-entry-type.warning {
-            background: #f56e28;
-        }
+            .log-entry-type.warning {
+                background: #f56e28;
+            }
 
-        .log-entry-type.notice {
-            background: #007cba;
-        }
+            .log-entry-type.notice {
+                background: #007cba;
+            }
 
-        .log-entry-type.deprecated {
-            background: #8c8f94;
-        }
+            .log-entry-type.deprecated {
+                background: #8c8f94;
+            }
 
-        .log-entry-type.info {
-            background: #72aee6;
-        }
+            .log-entry-type.info {
+                background: #72aee6;
+            }
 
-        .log-entry-type.cron,
-        .log-entry-type.error {
-            background: #dba617;
-        }
+            .log-entry-type.cron,
+            .log-entry-type.error {
+                background: #dba617;
+            }
 
-        .log-entry-message {
-            word-break: break-all;
-            white-space: pre-wrap;
-        }
+            .log-entry-message {
+                word-break: break-all;
+                white-space: pre-wrap;
+            }
 
-        .no-errors {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
+            .no-errors {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+            }
 
-        .no-errors .dashicons {
-            font-size: 48px;
-            margin-bottom: 10px;
-            color: #00a32a;
-        }
+            .no-errors .dashicons {
+                font-size: 48px;
+                margin-bottom: 10px;
+                color: #00a32a;
+            }
 
-        #loading {
-            text-align: center;
-            padding: 40px;
-        }
+            #loading {
+                text-align: center;
+                padding: 40px;
+            }
         </style>
-        
+
         <div class="wrap">
             <h1>Bug Squasher</h1>
-            
+
             <div class="bugsquasher-container">
                 <div class="bugsquasher-controls">
                     <button id="load-errors" class="button button-primary">Load Recent Errors</button>
                     <select id="error-limit">
-                        <option value="25">Show 25 recent</option>
-                        <option value="50" selected>Show 50 recent</option>
+                        <option value="25" selected>Show 25 recent</option>
+                        <option value="50">Show 50 recent</option>
                         <option value="100">Show 100 recent</option>
-                        <option value="200">Show 200 recent</option>
+                        <option value="250">Show 250 recent</option>
+                        <option value="500">Show 500 recent</option>
+                        <option value="1000">Show 1,000 recent</option>
+                        <option value="2000">Show 2,000 recent</option>
+                        <option value="3000">Show 3,000 recent (max)</option>
                     </select>
                     <button id="clear-log" class="button">Clear Log</button>
                     <button id="export-errors" class="button">Export Errors</button>
-                    
+
                     <div class="bugsquasher-info">
                         <?php
                         $debug_log = $this->get_debug_log_path();
@@ -328,7 +552,7 @@ class BugSquasher
                             $size = filesize($debug_log);
                             $size_formatted = size_format($size);
                             echo '<span class="status-enabled">Debug log found (' . $size_formatted . ')</span>';
-                            
+
                             // Show debug info if WP_DEBUG is enabled
                             if (defined('WP_DEBUG') && WP_DEBUG) {
                                 echo '<br><small>WP_DEBUG: Enabled | Path: ' . $debug_log . '</small>';
@@ -355,7 +579,7 @@ class BugSquasher
                         ?>
                     </div>
                 </div>
-                
+
                 <div class="bugsquasher-filters">
                     <h3>Filter by Error Type</h3>
                     <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
@@ -363,13 +587,13 @@ class BugSquasher
                     <label><input type="checkbox" class="error-type-filter" value="critical" checked> Critical</label>
                     <label><input type="checkbox" class="error-type-filter" value="error" checked> Errors</label>
                     <label><input type="checkbox" class="error-type-filter" value="warning" checked> Warnings</label>
-                    <label><input type="checkbox" class="error-type-filter" value="notice"> Notices</label>
-                    <label><input type="checkbox" class="error-type-filter" value="deprecated"> Deprecated</label>
+                    <label><input type="checkbox" class="error-type-filter" value="notice" checked> Notices</label>
+                    <label><input type="checkbox" class="error-type-filter" value="deprecated" checked> Deprecated</label>
                     <label><input type="checkbox" class="error-type-filter" value="firewall" checked> Firewall</label>
                     <label><input type="checkbox" class="error-type-filter" value="cron" checked> Cron</label>
                     <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
                 </div>
-                
+
                 <div class="bugsquasher-log-container">
                     <div id="error-count">Click "Load Recent Errors" to start</div>
                     <div id="log-content" style="display: none;"></div>
@@ -379,7 +603,40 @@ class BugSquasher
                 </div>
             </div>
         </div>
-        <?php
+<?php
+    }
+
+    /**
+     * Check rate limiting
+     */
+    private function check_rate_limit()
+    {
+        $max_requests = BugSquasher_Config::get_setting('rate_limit_requests', 10);
+        $window = BugSquasher_Config::get_setting('rate_limit_window', 60);
+
+        $user_id = get_current_user_id();
+        $cache_key = 'bugsquasher_rate_limit_' . $user_id;
+
+        $requests = get_transient($cache_key);
+        if ($requests === false) {
+            $requests = [];
+        }
+
+        $now = time();
+        // Remove old requests outside the window
+        $requests = array_filter($requests, function ($timestamp) use ($now, $window) {
+            return ($now - $timestamp) < $window;
+        });
+
+        if (count($requests) >= $max_requests) {
+            return false;
+        }
+
+        // Add current request
+        $requests[] = $now;
+        set_transient($cache_key, $requests, $window);
+
+        return true;
     }
 
     /**
@@ -438,16 +695,20 @@ class BugSquasher
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('BugSquasher: ajax_get_errors called');
         }
-        
+
         check_ajax_referer('bugsquasher_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('BugSquasher: User lacks manage_options capability');
+                error_log('BugSquasher: Unauthorized access attempt');
             }
             wp_die('Unauthorized');
         }
 
+        // Check rate limiting
+        if (!$this->check_rate_limit()) {
+            wp_send_json_error('Rate limit exceeded. Please wait before making another request.');
+        }
         $log_file = $this->get_debug_log_path();
 
         if (!$log_file || !file_exists($log_file)) {
@@ -456,15 +717,15 @@ class BugSquasher
             }
             wp_send_json_error('Debug log file not found');
         }
-        
-        // Get limit from request (default 50 for quick loading)
-        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 50;
-        $limit = max(10, min(500, $limit)); // Between 10 and 500
-        
+
+        // Get limit from request (default 25 for quick loading)
+        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 25;
+        $limit = max(25, min(3000, $limit)); // Between 25 and 3000
+
         // Check if we have cached results
         $cache_key = 'bugsquasher_errors_' . $limit . '_' . filemtime($log_file);
         $cached_errors = get_transient($cache_key);
-        
+
         if ($cached_errors !== false) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('BugSquasher: Using cached results');
@@ -478,11 +739,11 @@ class BugSquasher
         }
 
         $errors = $this->parse_debug_log($limit);
-        
+
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('BugSquasher: Found ' . count($errors) . ' errors');
         }
-        
+
         // Cache results for 5 minutes
         set_transient($cache_key, $errors, 300);
 
@@ -524,33 +785,33 @@ class BugSquasher
     private function parse_debug_log($max_lines = 100)
     {
         $log_file = $this->get_debug_log_path();
-        
+
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('BugSquasher: Looking for debug log at: ' . ($log_file ?: 'not configured'));
         }
-        
+
         if (!$log_file || !file_exists($log_file)) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('BugSquasher: Debug log file not configured or does not exist');
             }
             return [];
         }
-        
+
         $file_size = filesize($log_file);
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('BugSquasher: Debug log file exists, size: ' . $file_size . ' bytes');
         }
-        
+
         // For large files, read only the last portion
         $lines = $this->read_tail_lines($log_file, $max_lines * 10); // Read more lines to account for multi-line entries
-        
+
         if (empty($lines)) {
             return [];
         }
-        
+
         return $this->parse_log_lines($lines, $max_lines);
     }
-    
+
     /**
      * Read last N lines from a file efficiently
      */
@@ -559,52 +820,52 @@ class BugSquasher
         if (!file_exists($file)) {
             return [];
         }
-        
+
         $file_size = filesize($file);
         if ($file_size == 0) {
             return [];
         }
-        
+
         // For small files, just read everything
         if ($file_size < 50000) { // 50KB
             $content = file_get_contents($file);
             return explode("\n", $content);
         }
-        
+
         // For large files, read from the end
         $handle = fopen($file, 'r');
         if (!$handle) {
             return [];
         }
-        
+
         // Start from end and work backwards
         $lines = [];
         $buffer = '';
         $pos = $file_size;
         $chunk_size = 8192; // 8KB chunks
-        
+
         while ($pos > 0 && count($lines) < $max_lines) {
             $pos = max(0, $pos - $chunk_size);
             fseek($handle, $pos);
             $chunk = fread($handle, min($chunk_size, $file_size - $pos));
             $buffer = $chunk . $buffer;
-            
+
             // Split into lines
             $chunk_lines = explode("\n", $buffer);
-            
+
             // Keep the first line as it might be incomplete
             $buffer = array_shift($chunk_lines);
-            
+
             // Add lines to the beginning of our array
             $lines = array_merge($chunk_lines, $lines);
         }
-        
+
         fclose($handle);
-        
+
         // Return the last N lines
         return array_slice($lines, -$max_lines);
     }
-    
+
     /**
      * Parse log lines into error entries
      */
@@ -614,18 +875,18 @@ class BugSquasher
         $current_entry = '';
         $timestamp_pattern = '/^\[\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Z]{3,4}\]/';
         $processed_count = 0;
-        
+
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('BugSquasher: Parsing ' . count($lines) . ' lines, max errors: ' . $max_errors);
         }
-        
+
         foreach ($lines as $line) {
             $line = trim($line);
-            
+
             if (empty($line)) {
                 continue;
             }
-            
+
             // Check if this line starts a new log entry
             if (preg_match($timestamp_pattern, $line)) {
                 // Process previous entry if it exists
@@ -636,7 +897,7 @@ class BugSquasher
                     }
                     $processed_count++;
                 }
-                
+
                 // Start new entry
                 $current_entry = $line;
             } else {
@@ -644,7 +905,7 @@ class BugSquasher
                 $current_entry .= "\n" . $line;
             }
         }
-        
+
         // Process the last entry
         if (!empty($current_entry) && count($errors) < $max_errors) {
             $processed = $this->process_log_entry($current_entry);
@@ -653,17 +914,17 @@ class BugSquasher
             }
             $processed_count++;
         }
-        
+
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('BugSquasher: Processed ' . $processed_count . ' entries, found ' . count($errors) . ' errors');
         }
-        
+
         // Reverse to show most recent first
         return array_reverse($errors);
     }
 
     /**
-     * Process individual log entry
+     * Enhanced process_log_entry with timestamp formatting
      */
     private function process_log_entry($entry)
     {
@@ -671,7 +932,7 @@ class BugSquasher
         if (!preg_match('/(Fatal|Parse|Warning|Notice|Deprecated|CRITICAL|AIOS|Cron)/i', $entry)) {
             return null;
         }
-        
+
         // Check if entry contains error patterns
         $error_patterns = [
             '/Fatal error|PHP Fatal error/',
@@ -683,7 +944,7 @@ class BugSquasher
             '/AIOS firewall error/',
             '/Cron .* error/'
         ];
-        
+
         $is_error = false;
         foreach ($error_patterns as $pattern) {
             if (preg_match($pattern, $entry)) {
@@ -691,15 +952,16 @@ class BugSquasher
                 break;
             }
         }
-        
+
         if (!$is_error) {
             return null;
         }
 
-        // Extract timestamp
+        // Extract and format timestamp
         $timestamp = '';
         if (preg_match('/^\[([^\]]+)\]/', $entry, $matches)) {
-            $timestamp = $matches[1];
+            $raw_timestamp = $matches[1];
+            $timestamp = $this->format_timestamp($raw_timestamp);
         }
 
         return [
@@ -735,18 +997,6 @@ class BugSquasher
         } else {
             return 'error';
         }
-    }
-
-    /**
-     * Extract timestamp from log line
-     */
-    private function extract_timestamp($line)
-    {
-        // Try to match common WordPress debug log timestamp format
-        if (preg_match('/^\[(\d{2}-\w{3}-\d{4} \d{2}:\d{2}:\d{2} \w+)\]/', $line, $matches)) {
-            return $matches[1];
-        }
-        return '';
     }
 }
 
