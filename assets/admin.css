@@ -192,3 +192,96 @@
     text-align: center;
     padding: 40px;
 }
+
+/* Toast Notification Styles */
+.bugsquasher-toast {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease-in-out;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.bugsquasher-toast-show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.bugsquasher-toast-content {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+}
+
+.bugsquasher-toast-success .bugsquasher-toast-content {
+    background: #fff;
+    border-left-color: #00a32a;
+    color: #1e1e1e;
+}
+
+.bugsquasher-toast-error .bugsquasher-toast-content {
+    background: #fff;
+    border-left-color: #d63638;
+    color: #1e1e1e;
+}
+
+.bugsquasher-toast-icon {
+    margin-right: 8px;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.bugsquasher-toast-success .bugsquasher-toast-icon:before {
+    content: "✓";
+    color: #00a32a;
+    font-weight: bold;
+}
+
+.bugsquasher-toast-error .bugsquasher-toast-icon:before {
+    content: "✕";
+    color: #d63638;
+    font-weight: bold;
+}
+
+.bugsquasher-toast-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.bugsquasher-toast-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    margin-left: 12px;
+    padding: 0;
+    cursor: pointer;
+    color: #666;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bugsquasher-toast-close:hover {
+    color: #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 782px) {
+    .bugsquasher-toast {
+        top: 46px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
