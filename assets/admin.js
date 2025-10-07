@@ -104,6 +104,9 @@ jQuery(document).ready(function($) {
                     displayErrors(response.data.errors);
                     updateErrorCount(response.data.count);
                     
+                    // Apply initial filtering based on checkbox states
+                    filterErrors();
+                    
                     // Show cache status
                     if (response.data.cached) {
                         $('#error-count').append(' <span style="color: #72aee6;">(cached)</span>');

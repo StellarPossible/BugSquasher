@@ -363,8 +363,8 @@ class BugSquasher
                     <label><input type="checkbox" class="error-type-filter" value="critical" checked> Critical</label>
                     <label><input type="checkbox" class="error-type-filter" value="error" checked> Errors</label>
                     <label><input type="checkbox" class="error-type-filter" value="warning" checked> Warnings</label>
-                    <label><input type="checkbox" class="error-type-filter" value="notice" checked> Notices</label>
-                    <label><input type="checkbox" class="error-type-filter" value="deprecated" checked> Deprecated</label>
+                    <label><input type="checkbox" class="error-type-filter" value="notice"> Notices</label>
+                    <label><input type="checkbox" class="error-type-filter" value="deprecated"> Deprecated</label>
                     <label><input type="checkbox" class="error-type-filter" value="firewall" checked> Firewall</label>
                     <label><input type="checkbox" class="error-type-filter" value="cron" checked> Cron</label>
                     <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
