@@ -32,7 +32,7 @@ class BugSquasher_Config
         'export_format' => 'detailed',
         'max_errors_display' => 25,
         'cache_duration' => 300,
-        'error_types_default' => ['fatal', 'parse', 'critical'],
+        'error_types_default' => ['fatal', 'parse', 'critical', 'error', 'info'],
         'timestamp_conversion' => true,
         'rate_limit_requests' => 10,
         'rate_limit_window' => 60
@@ -85,6 +85,7 @@ class BugSquasher
         add_action('wp_ajax_bugsquasher_get_errors', array($this, 'ajax_get_errors'));
         add_action('wp_ajax_bugsquasher_clear_log', array($this, 'ajax_clear_log'));
         add_action('wp_ajax_bugsquasher_get_debug_status', array($this, 'ajax_get_debug_status'));
+        add_action('wp_ajax_bugsquasher_toggle_debug', array($this, 'ajax_toggle_debug'));
     }
 
     /**
@@ -331,6 +332,62 @@ class BugSquasher
     ?>
         <style type="text/css">
             /* BugSquasher Admin Styles - Embedded to avoid MIME issues */
+            
+            /* Header and Logo Styles */
+            .bugsquasher-header {
+                background: linear-gradient(135deg, #3C467B, #50589C);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
+            }
+
+            .bugsquasher-logo-container {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .bugsquasher-logo {
+                width: 80px;
+                height: 80px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                object-fit: cover;
+            }
+
+            .bugsquasher-title-section h1 {
+                margin: 0 0 5px 0;
+                font-size: 2.2em;
+                font-weight: 600;
+                color: white;
+            }
+
+            .bugsquasher-subtitle {
+                margin: 0;
+                font-size: 14px;
+                opacity: 0.9;
+                font-style: italic;
+            }
+
+            @media (max-width: 768px) {
+                .bugsquasher-logo-container {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 15px;
+                }
+                
+                .bugsquasher-logo {
+                    width: 60px;
+                    height: 60px;
+                }
+                
+                .bugsquasher-title-section h1 {
+                    font-size: 1.8em;
+                }
+            }
+            
             .bugsquasher-container {
                 max-width: 1200px;
                 margin: 20px 0;
@@ -360,6 +417,121 @@ class BugSquasher
             .status-not-found {
                 color: #d63638;
                 font-weight: bold;
+            }
+
+            .bugsquasher-debug-controls {
+                background: #E7F3FF;
+                padding: 15px;
+                border: 1px solid #3C467B;
+                border-radius: 6px;
+                margin-bottom: 20px;
+            }
+
+            .bugsquasher-debug-controls h3 {
+                margin-top: 0;
+                margin-bottom: 15px;
+                color: #3C467B;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .debug-toggle-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+
+            .debug-toggle-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                position: relative;
+            }
+
+            .debug-toggle-item.debug-item-disabled {
+                opacity: 0.6;
+                background: #f5f5f5;
+            }
+
+            .debug-toggle-item small {
+                position: absolute;
+                bottom: -15px;
+                left: 0;
+                right: 0;
+                text-align: center;
+            }
+
+            .debug-toggle-item label {
+                font-weight: 500;
+                color: #3C467B;
+                margin: 0;
+            }
+
+            .debug-toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 50px;
+                height: 24px;
+            }
+
+            .debug-toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .debug-toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: .4s;
+                border-radius: 24px;
+            }
+
+            .debug-toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .debug-toggle-slider {
+                background-color: #3C467B;
+            }
+
+            input:checked + .debug-toggle-slider:before {
+                transform: translateX(26px);
+            }
+
+            input:disabled + .debug-toggle-slider {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .debug-warning {
+                background: #FFF3CD;
+                border: 1px solid #FFEAA7;
+                border-radius: 4px;
+                padding: 10px;
+                margin-top: 10px;
+                font-size: 12px;
+                color: #856404;
             }
 
             .bugsquasher-filters {
@@ -630,12 +802,19 @@ class BugSquasher
         </style>
 
         <div class="wrap">
-            <h1>Bug Squasher</h1>
-
             <!-- Toast Container -->
             <div class="bugsquasher-toast-container" id="toast-container"></div>
 
             <div class="bugsquasher-container">
+                <div class="bugsquasher-header">
+                    <div class="bugsquasher-logo-container">
+                        <img src="<?php echo BUGSQUASHER_PLUGIN_URL; ?>assets/images/BugSquasherLogo.jpg" alt="BugSquasher Logo" class="bugsquasher-logo">
+                        <div class="bugsquasher-title-section">
+                            <h1>BugSquasher</h1>
+                            <p class="bugsquasher-subtitle">WordPress Debug Log Analyzer</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="bugsquasher-controls">
                     <button id="load-errors" class="button button-primary">Load Recent Errors</button>
                     <select id="error-limit">
@@ -686,6 +865,51 @@ class BugSquasher
                     </div>
                 </div>
 
+                <div class="bugsquasher-debug-controls">
+                    <h3>
+                        <span>WordPress Debug Settings</span>
+                        <small style="font-weight: normal; font-size: 12px; opacity: 0.8;">(Modifies wp-config.php)</small>
+                    </h3>
+                    
+                    <div class="debug-toggle-container">
+                        <div class="debug-toggle-item">
+                            <label for="wp-debug-toggle">WP_DEBUG</label>
+                            <label class="debug-toggle-switch">
+                                <input type="checkbox" id="wp-debug-toggle" 
+                                       <?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'checked' : ''; ?>>
+                                <span class="debug-toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="debug-toggle-item">
+                            <label for="wp-debug-log-toggle">WP_DEBUG_LOG</label>
+                            <label class="debug-toggle-switch">
+                                <input type="checkbox" id="wp-debug-log-toggle" 
+                                       <?php echo (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) ? 'checked' : ''; ?>>
+                                <span class="debug-toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="debug-toggle-item <?php echo (!defined('WP_DEBUG') || !WP_DEBUG) ? 'debug-item-disabled' : ''; ?>">
+                            <label for="wp-debug-display-toggle">WP_DEBUG_DISPLAY</label>
+                            <label class="debug-toggle-switch">
+                                <input type="checkbox" id="wp-debug-display-toggle" 
+                                       <?php echo (defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) ? 'checked' : ''; ?>
+                                       <?php echo (!defined('WP_DEBUG') || !WP_DEBUG) ? 'disabled' : ''; ?>>
+                                <span class="debug-toggle-slider"></span>
+                            </label>
+                            <?php if (!defined('WP_DEBUG') || !WP_DEBUG): ?>
+                                <small style="color: #666; font-size: 11px;">Requires WP_DEBUG to be enabled</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <div class="debug-warning">
+                        <strong>⚠️ Warning:</strong> These settings modify your wp-config.php file. Changes take effect immediately but may require a page refresh. 
+                        Always backup your site before making changes to debug settings.
+                    </div>
+                </div>
+
                 <div class="bugsquasher-filters">
                     <h3>Filter by Error Type</h3>
                     <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
@@ -697,7 +921,7 @@ class BugSquasher
                     <label><input type="checkbox" class="error-type-filter" value="deprecated"> Deprecated</label>
                     <label><input type="checkbox" class="error-type-filter" value="firewall" checked> Firewall</label>
                     <label><input type="checkbox" class="error-type-filter" value="cron"> Cron</label>
-                    <label><input type="checkbox" class="error-type-filter" value="info"> Info</label>
+                    <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
                 </div>
 
                 <div class="bugsquasher-log-container">
@@ -933,6 +1157,131 @@ class BugSquasher
     }
 
     /**
+     * AJAX handler to toggle debug settings
+     */
+    public function ajax_toggle_debug()
+    {
+        check_ajax_referer('bugsquasher_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        $setting = sanitize_text_field($_POST['setting']);
+        $value = $_POST['value'] === 'true';
+
+        // Log the request for debugging
+        error_log("BugSquasher: Toggle request - Setting: $setting, Value: " . ($value ? 'true' : 'false'));
+
+        $allowed_settings = ['WP_DEBUG', 'WP_DEBUG_LOG', 'WP_DEBUG_DISPLAY'];
+        if (!in_array($setting, $allowed_settings)) {
+            error_log("BugSquasher: Invalid setting attempted: $setting");
+            wp_send_json_error('Invalid setting: ' . $setting);
+        }
+
+        $result = $this->update_wp_config_setting($setting, $value);
+        
+        error_log("BugSquasher: Update result - " . json_encode($result));
+        
+        if ($result['success']) {
+            wp_send_json_success([
+                'message' => $result['message'],
+                'setting' => $setting,
+                'value' => $value
+            ]);
+        } else {
+            wp_send_json_error($result['message']);
+        }
+    }
+
+    /**
+     * Update wp-config.php setting
+     */
+    private function update_wp_config_setting($setting, $value)
+    {
+        $wp_config_path = ABSPATH . 'wp-config.php';
+        
+        error_log("BugSquasher: Attempting to update $setting in wp-config.php at: $wp_config_path");
+        
+        if (!file_exists($wp_config_path)) {
+            error_log("BugSquasher: wp-config.php not found at: $wp_config_path");
+            return ['success' => false, 'message' => 'wp-config.php not found at expected location'];
+        }
+
+        if (!is_writable($wp_config_path)) {
+            error_log("BugSquasher: wp-config.php is not writable");
+            return ['success' => false, 'message' => 'wp-config.php is not writable. Please check file permissions.'];
+        }
+
+        $config_content = file_get_contents($wp_config_path);
+        if ($config_content === false) {
+            error_log("BugSquasher: Could not read wp-config.php");
+            return ['success' => false, 'message' => 'Could not read wp-config.php'];
+        }
+
+        $value_string = $value ? 'true' : 'false';
+        $define_pattern = "/define\s*\(\s*['\"]" . preg_quote($setting, '/') . "['\"]\s*,\s*[^)]+\s*\);/";
+        $new_define = "define('" . $setting . "', " . $value_string . ");";
+
+        error_log("BugSquasher: Looking for pattern: $define_pattern");
+        error_log("BugSquasher: Will replace with: $new_define");
+
+        if (preg_match($define_pattern, $config_content)) {
+            // Setting exists, replace it
+            error_log("BugSquasher: Found existing $setting definition, replacing");
+            $config_content = preg_replace($define_pattern, $new_define, $config_content);
+        } else {
+            // Setting doesn't exist, add it
+            error_log("BugSquasher: $setting not found, adding new definition");
+            // Find the line with the database settings and add after it
+            $insertion_point = "/* That's all, stop editing! Happy publishing. */";
+            if (strpos($config_content, $insertion_point) !== false) {
+                $config_content = str_replace(
+                    $insertion_point,
+                    $new_define . "\n\n" . $insertion_point,
+                    $config_content
+                );
+            } else {
+                // Fallback: add before the closing PHP tag or at the end
+                if (strpos($config_content, '?>') !== false) {
+                    $config_content = str_replace('?>', $new_define . "\n?>", $config_content);
+                } else {
+                    $config_content .= "\n" . $new_define . "\n";
+                }
+            }
+        }
+
+        $backup_result = $this->backup_wp_config();
+        if (!$backup_result['success']) {
+            return $backup_result;
+        }
+
+        if (file_put_contents($wp_config_path, $config_content) === false) {
+            return ['success' => false, 'message' => 'Could not write to wp-config.php'];
+        }
+
+        return [
+            'success' => true, 
+            'message' => $setting . ' has been ' . ($value ? 'enabled' : 'disabled') . '. Changes will take effect on next page load.'
+        ];
+    }
+
+    /**
+     * Backup wp-config.php before making changes
+     */
+    private function backup_wp_config()
+    {
+        $wp_config_path = ABSPATH . 'wp-config.php';
+        $backup_path = ABSPATH . 'wp-config-backup-' . date('Y-m-d-H-i-s') . '.php';
+        
+        if (!copy($wp_config_path, $backup_path)) {
+            return ['success' => false, 'message' => 'Could not create backup of wp-config.php'];
+        }
+        
+        return ['success' => true, 'message' => 'Backup created at ' . basename($backup_path)];
+    }
+
+    /**
      * Parse debug log and return formatted errors (efficient version)
      */
     private function parse_debug_log($max_lines = 100)
@@ -1026,7 +1375,8 @@ class BugSquasher
     {
         $errors = [];
         $current_entry = '';
-        $timestamp_pattern = '/^\[\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Z]{3,4}\]/';
+        // More flexible timestamp pattern to catch various formats
+        $timestamp_pattern = '/^\[[\d\-\w\s:]+\]|^\d{4}-\d{2}-\d{2}|^\[\d{2}-[A-Za-z]{3}-\d{4}/';
         $processed_count = 0;
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -1040,12 +1390,12 @@ class BugSquasher
                 continue;
             }
 
-            // Check if this line starts a new log entry
-            if (preg_match($timestamp_pattern, $line)) {
+            // Check if this line starts a new log entry (has timestamp) or if it's the first line
+            if (preg_match($timestamp_pattern, $line) || empty($current_entry)) {
                 // Process previous entry if it exists
                 if (!empty($current_entry)) {
                     $processed = $this->process_log_entry($current_entry);
-                    if ($processed && count($errors) < $max_errors) {
+                    if ($processed) {
                         $errors[] = $processed;
                     }
                     $processed_count++;
@@ -1054,13 +1404,13 @@ class BugSquasher
                 // Start new entry
                 $current_entry = $line;
             } else {
-                // Continue previous entry
+                // Continue previous entry (multi-line)
                 $current_entry .= "\n" . $line;
             }
         }
 
         // Process the last entry
-        if (!empty($current_entry) && count($errors) < $max_errors) {
+        if (!empty($current_entry)) {
             $processed = $this->process_log_entry($current_entry);
             if ($processed) {
                 $errors[] = $processed;
@@ -1069,11 +1419,12 @@ class BugSquasher
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('BugSquasher: Processed ' . $processed_count . ' entries, found ' . count($errors) . ' errors');
+            error_log('BugSquasher: Processed ' . $processed_count . ' entries, found ' . count($errors) . ' total entries');
         }
 
-        // Reverse to show most recent first
-        return array_reverse($errors);
+        // Reverse to show most recent first, then limit to max_errors
+        $reversed_errors = array_reverse($errors);
+        return array_slice($reversed_errors, 0, $max_errors);
     }
 
     /**
@@ -1081,40 +1432,24 @@ class BugSquasher
      */
     private function process_log_entry($entry)
     {
-        // Quick check - if it doesn't contain common error keywords, skip it
-        if (!preg_match('/(Fatal|Parse|Warning|Notice|Deprecated|CRITICAL|AIOS|Cron)/i', $entry)) {
-            return null;
-        }
-
-        // Check if entry contains error patterns
-        $error_patterns = [
-            '/Fatal error|PHP Fatal error/',
-            '/Parse error|PHP Parse error/',
-            '/Warning|PHP Warning/',
-            '/Notice|PHP Notice/',
-            '/Deprecated|PHP Deprecated/',
-            '/CRITICAL/',
-            '/AIOS firewall error/',
-            '/Cron .* error/'
-        ];
-
-        $is_error = false;
-        foreach ($error_patterns as $pattern) {
-            if (preg_match($pattern, $entry)) {
-                $is_error = true;
-                break;
-            }
-        }
-
-        if (!$is_error) {
-            return null;
-        }
-
-        // Extract and format timestamp
+        // Don't filter out any entries - let them all be categorized
+        // Extract and format timestamp - try multiple patterns
         $timestamp = '';
+        
+        // Try different timestamp patterns
         if (preg_match('/^\[([^\]]+)\]/', $entry, $matches)) {
+            // Format: [timestamp]
             $raw_timestamp = $matches[1];
             $timestamp = $this->format_timestamp($raw_timestamp);
+        } elseif (preg_match('/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/', $entry, $matches)) {
+            // Format: YYYY-MM-DD HH:MM:SS
+            $timestamp = $matches[1];
+        } elseif (preg_match('/^(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})/', $entry, $matches)) {
+            // Format: Mon DD HH:MM:SS
+            $timestamp = date('Y') . ' ' . $matches[1];
+        } else {
+            // No timestamp found, use current time
+            $timestamp = date('Y-m-d H:i:s');
         }
 
         return [
@@ -1147,8 +1482,12 @@ class BugSquasher
             return 'cron';
         } elseif (preg_match('/\[BugSquasher\]/', $line)) {
             return 'info';
-        } else {
+        } elseif (preg_match('/\berror\b|\bfailed\b|\bexception\b|\binvalid\b|\bunable\b/i', $line)) {
+            // Look for actual error keywords in the message
             return 'error';
+        } else {
+            // All other logs default to info
+            return 'info';
         }
     }
 }

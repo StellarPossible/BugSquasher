@@ -302,4 +302,87 @@ jQuery(document).ready(function($) {
         filterErrors();
     });
 
+    // Debug toggle handlers
+    $('#wp-debug-toggle, #wp-debug-log-toggle, #wp-debug-display-toggle').on('change', function(e) {
+        const $toggle = $(this);
+        const setting = $toggle.attr('id').replace('-toggle', '').replace(/-/g, '_').toUpperCase();
+        const value = $toggle.is(':checked');
+        
+        // Check if this is WP_DEBUG_DISPLAY and WP_DEBUG is not enabled
+        if (setting === 'WP_DEBUG_DISPLAY' && !$('#wp-debug-toggle').is(':checked')) {
+            e.preventDefault();
+            $toggle.prop('checked', false);
+            showToast('WP_DEBUG must be enabled before you can enable WP_DEBUG_DISPLAY', 'error');
+            return false;
+        }
+        
+        // Prevent multiple rapid clicks
+        if ($toggle.data('processing')) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Mark as processing
+        $toggle.data('processing', true);
+        $toggle.prop('disabled', true);
+        
+        console.log('Toggling', setting, 'to', value);
+        
+        $.ajax({
+            url: bugsquasher_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'bugsquasher_toggle_debug',
+                nonce: bugsquasher_ajax.nonce,
+                setting: setting,
+                value: value
+            },
+            success: function(response) {
+                console.log('AJAX Response:', response);
+                if (response.success) {
+                    showToast(response.data.message, 'success');
+                    
+                    // Don't reload immediately, just update the UI state
+                    // The toggle should stay in its new position
+                    
+                    // If we just enabled/disabled WP_DEBUG, handle WP_DEBUG_DISPLAY accordingly
+                    if (setting === 'WP_DEBUG') {
+                        const $displayToggle = $('#wp-debug-display-toggle');
+                        const $displayItem = $displayToggle.closest('.debug-toggle-item');
+                        
+                        if (value) {
+                            // WP_DEBUG enabled - enable WP_DEBUG_DISPLAY toggle
+                            $displayToggle.prop('disabled', false);
+                            $displayItem.removeClass('debug-item-disabled');
+                        } else {
+                            // WP_DEBUG disabled - disable and uncheck WP_DEBUG_DISPLAY
+                            $displayToggle.prop('disabled', true).prop('checked', false);
+                            $displayItem.addClass('debug-item-disabled');
+                        }
+                    }
+                    
+                    // Refresh the debug status info after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast('Error: ' + (response.data || 'Unknown error'), 'error');
+                    // Revert the toggle state on error
+                    $toggle.prop('checked', !value);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                showToast('AJAX Error: ' + error, 'error');
+                // Revert the toggle state on error
+                $toggle.prop('checked', !value);
+            },
+            complete: function() {
+                // Re-enable the toggle and clear processing flag
+                $toggle.prop('disabled', false);
+                $toggle.data('processing', false);
+            }
+        });
+    });
+
 });
