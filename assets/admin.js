@@ -194,6 +194,15 @@ jQuery(document).ready(function($) {
             checkedTypes.push($(this).val());
         });
 
+        // Get all available error types in the current results
+        var availableTypes = [];
+        $('.log-entry').each(function() {
+            var entryType = $(this).attr('data-type');
+            if (availableTypes.indexOf(entryType) === -1) {
+                availableTypes.push(entryType);
+            }
+        });
+
         var visibleCount = 0;
         $('.log-entry').each(function() {
             var $entry = $(this);
@@ -207,6 +216,21 @@ jQuery(document).ready(function($) {
             }
         });
 
+        // Check for missing checked types
+        var missingTypes = [];
+        $.each(checkedTypes, function(index, type) {
+            if (availableTypes.indexOf(type) === -1) {
+                missingTypes.push(type);
+            }
+        });
+
+        // Show missing types notification
+        if (missingTypes.length > 0 && $('.log-entry').length > 0) {
+            showMissingTypesNotification(missingTypes);
+        } else {
+            $('#missing-types-notification').hide();
+        }
+
         // Update count of visible errors
         var totalErrors = $('.log-entry').length;
         if (visibleCount === totalErrors) {
@@ -214,6 +238,40 @@ jQuery(document).ready(function($) {
         } else {
             $('#error-count').text('Showing ' + visibleCount + ' of ' + totalErrors + ' errors');
         }
+    }
+
+    /**
+     * Show notification for missing bug types
+     */
+    function showMissingTypesNotification(missingTypes) {
+        var currentLimit = parseInt($('#error-limit').val()) || 50;
+        var suggestedLimits = [];
+        
+        if (currentLimit < 100) suggestedLimits.push(100);
+        if (currentLimit < 500) suggestedLimits.push(500);
+        if (currentLimit < 1000) suggestedLimits.push(1000);
+        
+        var typeList = missingTypes.map(function(type) {
+            return '<strong>' + type.charAt(0).toUpperCase() + type.slice(1) + '</strong>';
+        }).join(', ');
+        
+        var html = '<div class="missing-types-notification">';
+        html += '<h4>🔍 Selected error types not found</h4>';
+        html += '<p>The following checked error types were not found in the current results: ' + typeList + '</p>';
+        
+        if (suggestedLimits.length > 0) {
+            html += '<div class="expand-suggestion">';
+            html += '💡 <strong>Suggestion:</strong> Try expanding your search to ';
+            html += suggestedLimits.map(function(limit) {
+                return '<a href="#" onclick="$(\'#error-limit\').val(' + limit + '); loadErrors(); return false;" style="color: white; text-decoration: underline;">' + limit + ' errors</a>';
+            }).join(' or ');
+            html += ' to find more results.';
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        
+        $('#missing-types-notification').html(html).show();
     }
 
     // Event handlers

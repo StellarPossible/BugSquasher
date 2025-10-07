@@ -361,21 +361,57 @@ class BugSquasher
             }
 
             .bugsquasher-filters {
-                background: #fff;
+                background: #FEF3E2;
                 padding: 15px;
-                border: 1px solid #ccd0d4;
+                border: 1px solid #3C467B;
+                border-radius: 6px;
                 margin-bottom: 20px;
             }
 
             .bugsquasher-filters h3 {
                 margin-top: 0;
                 margin-bottom: 10px;
+                color: #3C467B;
+                font-weight: 600;
             }
 
             .bugsquasher-filters label {
                 display: inline-block;
                 margin-right: 15px;
                 margin-bottom: 5px;
+                color: #3C467B;
+            }
+
+            /* Missing types notification */
+            .missing-types-notification {
+                background: linear-gradient(135deg, #6E8CFB, #636CCB);
+                color: white;
+                padding: 15px;
+                border-radius: 6px;
+                margin-bottom: 15px;
+                border-left: 4px solid #3C467B;
+                box-shadow: 0 2px 4px rgba(60, 70, 123, 0.1);
+            }
+
+            .missing-types-notification h4 {
+                margin: 0 0 8px 0;
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .missing-types-notification p {
+                margin: 0;
+                font-size: 14px;
+                opacity: 0.95;
+            }
+
+            .missing-types-notification .expand-suggestion {
+                background: rgba(255, 255, 255, 0.2);
+                padding: 8px 12px;
+                border-radius: 4px;
+                margin-top: 10px;
+                font-size: 13px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
             }
 
             .bugsquasher-log-container {
@@ -583,19 +619,20 @@ class BugSquasher
                 <div class="bugsquasher-filters">
                     <h3>Filter by Error Type</h3>
                     <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
-                    <label><input type="checkbox" class="error-type-filter" value="parse" checked> Parse Errors</label>
+                    <label><input type="checkbox" class="error-type-filter" value="parse"> Parse Errors</label>
                     <label><input type="checkbox" class="error-type-filter" value="critical" checked> Critical</label>
                     <label><input type="checkbox" class="error-type-filter" value="error" checked> Errors</label>
-                    <label><input type="checkbox" class="error-type-filter" value="warning" checked> Warnings</label>
-                    <label><input type="checkbox" class="error-type-filter" value="notice" checked> Notices</label>
-                    <label><input type="checkbox" class="error-type-filter" value="deprecated" checked> Deprecated</label>
+                    <label><input type="checkbox" class="error-type-filter" value="warning"> Warnings</label>
+                    <label><input type="checkbox" class="error-type-filter" value="notice"> Notices</label>
+                    <label><input type="checkbox" class="error-type-filter" value="deprecated"> Deprecated</label>
                     <label><input type="checkbox" class="error-type-filter" value="firewall" checked> Firewall</label>
-                    <label><input type="checkbox" class="error-type-filter" value="cron" checked> Cron</label>
-                    <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
+                    <label><input type="checkbox" class="error-type-filter" value="cron"> Cron</label>
+                    <label><input type="checkbox" class="error-type-filter" value="info"> Info</label>
                 </div>
 
                 <div class="bugsquasher-log-container">
                     <div id="error-count">Click "Load Recent Errors" to start</div>
+                    <div id="missing-types-notification" style="display: none;"></div>
                     <div id="log-content" style="display: none;"></div>
                     <div id="loading" style="display: none; text-align: center; padding: 40px;">
                         <p>Loading errors...</p>
