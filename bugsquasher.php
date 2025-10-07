@@ -84,6 +84,7 @@ class BugSquasher
         // AJAX handlers
         add_action('wp_ajax_bugsquasher_get_errors', array($this, 'ajax_get_errors'));
         add_action('wp_ajax_bugsquasher_clear_log', array($this, 'ajax_clear_log'));
+        add_action('wp_ajax_bugsquasher_get_debug_status', array($this, 'ajax_get_debug_status'));
     }
 
     /**
@@ -116,6 +117,29 @@ class BugSquasher
             'bugsquasher-settings',
             array($this, 'settings_page')
         );
+    }
+
+    public function enqueue_admin_assets($hook)
+    {
+        // Only load on our admin page
+        if ($hook !== 'tools_page_bugsquasher') {
+            return;
+        }
+
+        // Only enqueue JavaScript - CSS is embedded directly in admin_page() to avoid MIME issues
+        wp_enqueue_script(
+            'bugsquasher-admin',
+            BUGSQUASHER_PLUGIN_URL . 'assets/admin.js',
+            array('jquery'),
+            BUGSQUASHER_VERSION,
+            true
+        );
+
+        // Localize script
+        wp_localize_script('bugsquasher-admin', 'bugsquasher_ajax', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('bugsquasher_nonce')
+        ));
     }
 
     /**
@@ -278,28 +302,6 @@ class BugSquasher
         }
 
         return $raw_timestamp; // Fallback to original
-    }
-
-    /**
-     * Enqueue admin assets
-     */
-    public function enqueue_admin_assets($hook)
-    {
-        if ($hook !== 'tools_page_bugsquasher') {
-            return;
-        }
-
-        // Only enqueue JavaScript - CSS will be embedded directly to avoid MIME issues
-        wp_enqueue_script('bugsquasher-admin', BUGSQUASHER_PLUGIN_URL . 'assets/admin.js', array('jquery'), BUGSQUASHER_VERSION, true);
-
-        wp_localize_script('bugsquasher-admin', 'bugsquasher_ajax', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('bugsquasher_nonce')
-        ));
-
-        // Explicitly remove any potential CSS that might be auto-enqueued
-        wp_deregister_style('bugsquasher-admin');
-        wp_deregister_style('bugsquasher');
     }
 
     /**
@@ -560,10 +562,78 @@ class BugSquasher
                 text-align: center;
                 padding: 40px;
             }
+
+            /* Toast Notification Styles */
+            .bugsquasher-toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                pointer-events: none;
+            }
+
+            .bugsquasher-toast {
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                padding: 12px 16px;
+                margin-bottom: 8px;
+                min-width: 280px;
+                max-width: 400px;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                pointer-events: auto;
+                position: relative;
+            }
+
+            .bugsquasher-toast.show {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            .bugsquasher-toast.success {
+                border-left: 4px solid #00a32a;
+            }
+
+            .bugsquasher-toast.error {
+                border-left: 4px solid #d63638;
+            }
+
+            .bugsquasher-toast.info {
+                border-left: 4px solid #007cba;
+            }
+
+            .bugsquasher-toast-message {
+                font-size: 14px;
+                line-height: 1.4;
+                margin: 0;
+            }
+
+            .bugsquasher-toast-close {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: none;
+                border: none;
+                font-size: 16px;
+                color: #666;
+                cursor: pointer;
+                padding: 0;
+                line-height: 1;
+            }
+
+            .bugsquasher-toast-close:hover {
+                color: #000;
+            }
         </style>
 
         <div class="wrap">
             <h1>Bug Squasher</h1>
+
+            <!-- Toast Container -->
+            <div class="bugsquasher-toast-container" id="toast-container"></div>
 
             <div class="bugsquasher-container">
                 <div class="bugsquasher-controls">
@@ -814,6 +884,52 @@ class BugSquasher
         } else {
             wp_send_json_error('Failed to clear debug log');
         }
+    }
+
+    /**
+     * AJAX handler to get debug log status
+     */
+    public function ajax_get_debug_status()
+    {
+        check_ajax_referer('bugsquasher_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        $debug_log = $this->get_debug_log_path();
+        $status_html = '';
+
+        if ($debug_log && file_exists($debug_log)) {
+            $size = filesize($debug_log);
+            $size_formatted = size_format($size);
+            $status_html = '<span class="status-enabled">Debug log found (' . $size_formatted . ')</span>';
+
+            // Show debug info if WP_DEBUG is enabled
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                $status_html .= '<br><small>WP_DEBUG: Enabled | Path: ' . $debug_log . '</small>';
+                $status_html .= '<br><small>PHP Error Log: ' . ini_get('error_log') . '</small>';
+                $status_html .= '<br><small>Log Errors: ' . (ini_get('log_errors') ? 'On' : 'Off') . '</small>';
+            }
+        } else {
+            if (!$debug_log) {
+                $status_html = '<span class="status-not-found">Debug log not configured</span>';
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    $status_html .= '<br><small>WP_DEBUG: Enabled</small>';
+                    $status_html .= '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
+                    $status_html .= '<br><small>Set WP_DEBUG_LOG to true in wp-config.php to enable logging</small>';
+                }
+            } else {
+                $status_html = '<span class="status-not-found">Debug log not found</span>';
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    $status_html .= '<br><small>WP_DEBUG: Enabled | Expected at: ' . $debug_log . '</small>';
+                    $status_html .= '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
+                    $status_html .= '<br><small>Check your wp-config.php settings</small>';
+                }
+            }
+        }
+
+        wp_send_json_success($status_html);
     }
 
     /**
