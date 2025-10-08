@@ -1,12 +1,222 @@
-.bugsquasher-container {
-    max-width: 1200px;
-    margin: 20px 0;
+/* BugSquasher Admin Styles */
+:root {
+    --bs-main: #80A1BA;
+    --bs-second: #91C4C3;
+    --bs-accessory-1: #B4DEBD;
+    --bs-accessory-2: #FFF7DD;
+}
+
+/* Dashboard Header Styles */
+.bugsquasher-dashboard-header {
+    margin-bottom: 20px;
+}
+
+.bugsquasher-dashboard-header h1.wp-heading-inline {
+    font-size: 23px;
+    font-weight: 400;
+    margin: 0;
+    padding: 9px 0 4px 0;
+    line-height: 1.3;
+}
+
+.bugsquasher-dashboard-header .wp-header-end {
+    border: 0;
+    height: 0;
+    margin: -4px 0 16px;
+}
+
+/* App Wrapper Styles */
+.bugsquasher-app-wrapper {
+    box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
+    background-color: #B4DEBD;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+/* Header and Logo Styles */
+.bugsquasher-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    color: white;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
+}
+
+.bugsquasher-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.spicon {
+    max-width: 2.5rem;
+    vertical-align: middle;
+}
+
+.bugsquasher-logo {
+    max-width: 10rem;
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.bugsquasher-subtitle {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+.bugsquasher-filters {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
+}
+
+.filter-header {
+    margin-bottom: 15px;
+}
+
+.filter-title-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bugsquasher-filters h3 {
+    margin: 0;
+    color: #80A1BA;
+    font-weight: 600;
+}
+
+/* Select All/Deselect All Button Styles */
+.select-all-btn {
+    position: relative;
+    font-weight: 500;
+    padding: 5px 12px !important;
+    border-radius: 5px !important;
+    border: 2px solid !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer;
+    min-width: 100px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Select All State (when some/none are selected) */
+.select-all-btn[data-state="select"] {
+    background: #91C4C3 !important;
+    border-color: #91C4C3 !important;
+    color: white !important;
+}
+
+.select-all-btn[data-state="select"]:hover {
+    background: #80A1BA !important;
+    border-color: #80A1BA !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(128, 161, 186, 0.3);
+}
+
+/* Deselect All State (when all are selected) */
+.select-all-btn[data-state="deselect"] {
+    background: #d63638 !important;
+    border-color: #d63638 !important;
+    color: white !important;
+}
+
+.select-all-btn[data-state="deselect"]:hover {
+    background: #b32d2e !important;
+    border-color: #b32d2e !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(214, 54, 56, 0.3);
+}
+
+/* Partial State (mixed selection) */
+.select-all-btn[data-state="partial"] {
+    background: #B4DEBD !important;
+    border-color: #B4DEBD !important;
+    color: #2c3e50 !important;
+}
+
+.select-all-btn[data-state="partial"]:hover {
+    background: #91C4C3 !important;
+    border-color: #91C4C3 !important;
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
+}
+
+/* Button text animation */
+.select-all-btn .btn-text {
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.filter-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 5px;
+}
+
+.bugsquasher-filters label {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 5px;
+    background: white;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+    color: #80A1BA;
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
+}
+
+.bugsquasher-filters label:hover {
+    background: #B4DEBD;
+    border-color: #91C4C3;
+    transform: translateY(-1px);
+}
+
+.bugsquasher-filters input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #80A1BA;
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .bugsquasher-logo-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .filter-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .select-all-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .filter-checkboxes {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+    }
 }
 
 .bugsquasher-controls {
     background: #fff;
     padding: 15px;
-    border: 1px solid #ccd0d4;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
@@ -16,6 +226,29 @@
 
 .bugsquasher-info {
     margin-left: auto;
+    font-size: 13px;
+    line-height: 1.3;
+    max-width: 400px;
+}
+
+.bugsquasher-info small {
+    font-size: 11px;
+    line-height: 1.2;
+    display: block;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .bugsquasher-info {
+        margin-left: 0;
+        margin-top: 10px;
+        max-width: 100%;
+        font-size: 12px;
+    }
+
+    .bugsquasher-info small {
+        font-size: 10px;
+    }
 }
 
 .status-enabled {
@@ -23,83 +256,193 @@
     font-weight: bold;
 }
 
-.status-disabled, .status-not-found {
+.status-disabled,
+.status-not-found {
     color: #d63638;
     font-weight: bold;
 }
 
-.bugsquasher-filters {
-    background: #fff;
+.bugsquasher-debug-controls {
+    background: #E7F3FF;
     padding: 15px;
-    border: 1px solid #ccd0d4;
+    border: 1px solid #3C467B;
+    border-radius: 6px;
     margin-bottom: 20px;
+}
+
+.bugsquasher-debug-controls h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #3C467B;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.debug-toggle-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.debug-toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    position: relative;
+}
+
+.debug-toggle-item.debug-item-disabled {
+    opacity: 0.6;
+    background: #f5f5f5;
+}
+
+.debug-toggle-item small {
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+.debug-toggle-item label {
+    font-weight: 500;
+    color: #3C467B;
+    margin: 0;
+}
+
+.debug-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.debug-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.debug-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.debug-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.debug-toggle-slider {
+    background-color: #3C467B;
+}
+
+input:checked+.debug-toggle-slider:before {
+    transform: translateX(26px);
+}
+
+input:disabled+.debug-toggle-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.debug-confirmation-checkbox {
+    margin: 10px 0 !important;
+}
+
+.debug-confirmation-checkbox input[type="checkbox"] {
+    margin-right: 8px !important;
+}
+
+.permission-info-box {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.permission-info-box code {
+    background: #f6f8fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'SFMono-Regular', Monaco, Consolas, monospace;
+    font-size: 12px;
+}
+
+.debug-warning {
+    background: #FFF3CD;
+    border: 1px solid #FFEAA7;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #856404;
+}
+
+.bugsquasher-filters {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
 }
 
 .bugsquasher-filters h3 {
     margin-top: 0;
     margin-bottom: 10px;
+    color: #3C467B;
+    font-weight: 600;
 }
 
-/* Modified: Improved filter checkboxes layout */
-.filter-checkboxes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
+/* Missing types notification */
+.missing-types-notification {
+    background: linear-gradient(135deg, #6E8CFB, #636CCB);
+    color: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border-left: 4px solid #3C467B;
+    box-shadow: 0 2px 4px rgba(60, 70, 123, 0.1);
 }
 
-/* Modified: Improved label styling for more compact layout */
-.bugsquasher-filters label {
-    display: inline-flex;
-    align-items: center;
+.missing-types-notification h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.missing-types-notification p {
     margin: 0;
-    padding: 6px 8px;
-    background: #f8f8f8;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+.missing-types-notification .expand-suggestion {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 12px;
     border-radius: 4px;
-    border: 1px solid #e2e4e7;
+    margin-top: 10px;
     font-size: 13px;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-}
-
-.bugsquasher-filters label:hover {
-    background: #f0f0f0;
-    border-color: #c3c4c7;
-}
-
-.bugsquasher-filters input[type="checkbox"] {
-    margin-right: 5px;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-
-/* Added: Responsive adjustments for filter labels */
-@media (max-width: 782px) {
-    .filter-checkboxes {
-        gap: 6px;
-    }
-    
-    .bugsquasher-filters label {
-        font-size: 12px;
-        padding: 5px 6px;
-    }
-}
-
-/* Added: Even more compact for small screens */
-@media (max-width: 480px) {
-    .filter-checkboxes {
-        gap: 4px;
-    }
-    
-    .bugsquasher-filters label {
-        padding: 4px 5px;
-        font-size: 11px;
-    }
-    
-    .bugsquasher-filters input[type="checkbox"] {
-        margin-right: 3px;
-        transform: scale(0.9);
-    }
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .bugsquasher-log-container {
@@ -250,94 +593,206 @@
 }
 
 /* Toast Notification Styles */
-.bugsquasher-toast {
+.bugsquasher-toast-container {
     position: fixed;
-    top: 32px;
+    top: 20px;
     right: 20px;
     z-index: 9999;
+    pointer-events: none;
+}
+
+.bugsquasher-toast {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    min-width: 280px;
     max-width: 400px;
     opacity: 0;
     transform: translateX(100%);
-    transition: all 0.3s ease-in-out;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    position: relative;
 }
 
-.bugsquasher-toast-show {
+.bugsquasher-toast.show {
     opacity: 1;
     transform: translateX(0);
 }
 
-.bugsquasher-toast-content {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-left: 4px solid;
+.bugsquasher-toast.success {
+    border-left: 4px solid #00a32a;
 }
 
-.bugsquasher-toast-success .bugsquasher-toast-content {
-    background: #fff;
-    border-left-color: #00a32a;
-    color: #1e1e1e;
+.bugsquasher-toast.error {
+    border-left: 4px solid #d63638;
 }
 
-.bugsquasher-toast-error .bugsquasher-toast-content {
-    background: #fff;
-    border-left-color: #d63638;
-    color: #1e1e1e;
-}
-
-.bugsquasher-toast-icon {
-    margin-right: 8px;
-    font-size: 16px;
-    line-height: 1;
-}
-
-.bugsquasher-toast-success .bugsquasher-toast-icon:before {
-    content: "✓";
-    color: #00a32a;
-    font-weight: bold;
-}
-
-.bugsquasher-toast-error .bugsquasher-toast-icon:before {
-    content: "✕";
-    color: #d63638;
-    font-weight: bold;
+.bugsquasher-toast.info {
+    border-left: 4px solid #007cba;
 }
 
 .bugsquasher-toast-message {
-    flex: 1;
     font-size: 14px;
     line-height: 1.4;
+    margin: 0;
 }
 
 .bugsquasher-toast-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     background: none;
     border: none;
-    font-size: 18px;
-    line-height: 1;
-    margin-left: 12px;
-    padding: 0;
-    cursor: pointer;
+    font-size: 16px;
     color: #666;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
 }
 
 .bugsquasher-toast-close:hover {
     color: #000;
 }
 
-/* Responsive adjustments */
-@media (max-width: 782px) {
-    .bugsquasher-toast {
-        top: 46px;
-        right: 10px;
-        left: 10px;
-        max-width: none;
+/* Responsive styles for debug toggles */
+@media (max-width: 768px) {
+    .debug-toggles-grid {
+        grid-template-columns: 1fr !important;
     }
+
+    .debug-toggle-item {
+        padding: 15px 10px !important;
+    }
+
+    .debug-toggles-wrapper {
+        padding: 15px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .debug-toggles-grid {
+        gap: 10px !important;
+    }
+
+    .debug-toggle-item {
+        padding: 12px 8px !important;
+    }
+
+    .debug-toggle-item label {
+        font-size: 14px;
+    }
+}
+
+/* Security Status Box in Header - Improved layout */
+.bugsquasher-security-status {
+    margin: 5px;
+    padding: 10px;
+    background: rgba(240, 246, 252, 0.9);
+    border-radius: 5px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    flex: 1;
+}
+
+.bugsquasher-security-status strong {
+    color: #0969da;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.bugsquasher-security-status .status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.bugsquasher-security-status .status-label {
+    color: #666;
+    margin-right: 10px;
+    min-width: 110px;
+    font-weight: 500;
+}
+
+.bugsquasher-security-status .status-value {
+    font-family: monospace;
+    flex: 1;
+}
+
+.bugsquasher-security-status .security-badge {
+    background: #f6f8fa;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+/* Responsive layout improvements */
+@media (max-width: 992px) {
+    .bugsquasher-header {
+        flex-direction: column;
+    }
+
+    .bugsquasher-security-status .status-row {
+        margin-bottom: 5px;
+    }
+
+    .bugsquasher-security-status .status-label {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .bugsquasher-logo-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .bugsquasher-security-status {
+        font-size: 12px;
+    }
+
+    .bugsquasher-security-status .status-row {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .bugsquasher-security-status .status-label {
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .bugsquasher-security-status .status-value {
+        padding-left: 8px;
+    }
+}
+
+/* Debug warning styles */
+.bugsquasher-debug-warning {
+    background-color: #FFF3CD; 
+    border: 2px solid #FFD700; 
+    border-radius: 6px; 
+    padding: 15px; 
+    margin-bottom: 20px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    color: #7d6608; 
+    font-size: 14px; 
+    position: relative;
+}
+
+.bugsquasher-production-warning,
+.bugsquasher-development-warning {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
 }
