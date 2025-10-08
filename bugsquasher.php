@@ -436,6 +436,29 @@ class BugSquasher
 
             .bugsquasher-info {
                 margin-left: auto;
+                font-size: 13px;
+                line-height: 1.3;
+                max-width: 400px;
+            }
+
+            .bugsquasher-info small {
+                font-size: 11px;
+                line-height: 1.2;
+                display: block;
+                margin-top: 2px;
+            }
+
+            @media (max-width: 768px) {
+                .bugsquasher-info {
+                    margin-left: 0;
+                    margin-top: 10px;
+                    max-width: 100%;
+                    font-size: 12px;
+                }
+                
+                .bugsquasher-info small {
+                    font-size: 10px;
+                }
             }
 
             .status-enabled {
@@ -851,6 +874,35 @@ class BugSquasher
             .bugsquasher-toast-close:hover {
                 color: #000;
             }
+
+            /* Responsive styles for debug toggles */
+            @media (max-width: 768px) {
+                .debug-toggles-grid {
+                    grid-template-columns: 1fr !important;
+                }
+                
+                .debug-toggle-item {
+                    padding: 15px 10px !important;
+                }
+                
+                .debug-toggles-wrapper {
+                    padding: 15px !important;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .debug-toggles-grid {
+                    gap: 10px !important;
+                }
+                
+                .debug-toggle-item {
+                    padding: 12px 8px !important;
+                }
+                
+                .debug-toggle-item label {
+                    font-size: 14px;
+                }
+            }
         </style>
 
         <div class="wrap">
@@ -875,55 +927,6 @@ class BugSquasher
                             </div>
                         </div>
                     </div>
-                <div class="bugsquasher-controls">
-                    <button id="load-errors" class="button button-primary">Load Recent Errors</button>
-                    <select id="error-limit">
-                        <option value="25" selected>Show 25 recent</option>
-                        <option value="50">Show 50 recent</option>
-                        <option value="100">Show 100 recent</option>
-                        <option value="250">Show 250 recent</option>
-                        <option value="500">Show 500 recent</option>
-                        <option value="1000">Show 1,000 recent</option>
-                        <option value="2000">Show 2,000 recent</option>
-                        <option value="3000">Show 3,000 recent (max)</option>
-                    </select>
-                    <button id="clear-log" class="button">Clear Log</button>
-                    <button id="export-errors" class="button">Export Errors</button>
-
-                    <div class="bugsquasher-info">
-                        <?php
-                        $debug_log = $this->get_debug_log_path();
-                        if ($debug_log && file_exists($debug_log)) {
-                            $size = filesize($debug_log);
-                            $size_formatted = size_format($size);
-                            echo '<span class="status-enabled">Debug log found (' . $size_formatted . ')</span>';
-
-                            // Show debug info if WP_DEBUG is enabled
-                            if (defined('WP_DEBUG') && WP_DEBUG) {
-                                echo '<br><small>WP_DEBUG: Enabled | Path: ' . $debug_log . '</small>';
-                                echo '<br><small>PHP Error Log: ' . ini_get('error_log') . '</small>';
-                                echo '<br><small>Log Errors: ' . (ini_get('log_errors') ? 'On' : 'Off') . '</small>';
-                            }
-                        } else {
-                            if (!$debug_log) {
-                                echo '<span class="status-not-found">Debug log not configured</span>';
-                                if (defined('WP_DEBUG') && WP_DEBUG) {
-                                    echo '<br><small>WP_DEBUG: Enabled</small>';
-                                    echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
-                                    echo '<br><small>Set WP_DEBUG_LOG to true in wp-config.php to enable logging</small>';
-                                }
-                            } else {
-                                echo '<span class="status-not-found">Debug log not found</span>';
-                                if (defined('WP_DEBUG') && WP_DEBUG) {
-                                    echo '<br><small>WP_DEBUG: Enabled | Expected at: ' . $debug_log . '</small>';
-                                    echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
-                                    echo '<br><small>Check your wp-config.php settings</small>';
-                                }
-                            }
-                        }
-                        ?>
-                    </div>
-                </div>
 
                 <div class="bugsquasher-debug-controls">
                     <h3>
@@ -948,7 +951,7 @@ class BugSquasher
                         
                         <!-- File Permissions Information -->
                         <div style="background: #f0f6fc; border: 1px solid #0969da; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
-                            <strong>📁 wp-config.php Security Status</strong><br>
+                            <strong>📁 wp-config.php & Debug Log Security Status</strong><br>
                             <div style="margin: 8px 0; font-family: monospace; font-size: 13px;">
                                 <span style="color: #666;">File:</span> <?php echo $config_info['path']; ?><br>
                                 <span style="color: #666;">Permissions:</span> 
@@ -965,7 +968,52 @@ class BugSquasher
                                         default: echo '❓ Unknown'; break;
                                     }
                                     ?>
+                                </span><br>
+                                <span style="color: #666;">Environment:</span> 
+                                <span style="background: #f6f8fa; padding: 2px 6px; border-radius: 3px;">
+                                    <?php echo $environment_label; ?>
                                 </span>
+                                <?php if ($is_development): ?>
+                                    <span style="color: #00a32a;">✓ Safe for debug modification</span>
+                                <?php elseif ($is_staging): ?>
+                                    <span style="color: #dba617;">⚠ Use caution</span>
+                                <?php else: ?>
+                                    <span style="color: #d63638;">🔒 Modification restricted</span>
+                                <?php endif; ?>
+                                <br><br>
+                                <strong style="color: #0969da;">🐛 Debug Log Status:</strong><br>
+                                <?php
+                                $debug_log = $this->get_debug_log_path();
+                                if ($debug_log && file_exists($debug_log)) {
+                                    $size = filesize($debug_log);
+                                    $size_formatted = size_format($size);
+                                    echo '<span style="color: #00a32a; font-weight: bold;">Debug log found (' . $size_formatted . ')</span><br>';
+                                    
+                                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                                        echo '<span style="color: #666;">WP_DEBUG:</span> <span style="color: #00a32a;">Enabled</span> | ';
+                                        echo '<span style="color: #666;">Path:</span> <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;">' . $debug_log . '</code><br>';
+                                        echo '<span style="color: #666;">PHP Error Log:</span> <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;">' . ini_get('error_log') . '</code><br>';
+                                        echo '<span style="color: #666;">Log Errors:</span> <span style="color: #00a32a;">' . (ini_get('log_errors') ? 'On' : 'Off') . '</span>';
+                                    }
+                                } else {
+                                    if (!$debug_log) {
+                                        echo '<span style="color: #d63638; font-weight: bold;">Debug log not configured</span><br>';
+                                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                                            echo '<span style="color: #666;">WP_DEBUG:</span> <span style="color: #00a32a;">Enabled</span><br>';
+                                            echo '<span style="color: #666;">WP_DEBUG_LOG:</span> <span style="color: #d63638;">' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</span><br>';
+                                            echo '<small style="color: #856404;">Set WP_DEBUG_LOG to true in wp-config.php to enable logging</small>';
+                                        }
+                                    } else {
+                                        echo '<span style="color: #d63638; font-weight: bold;">Debug log not found</span><br>';
+                                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                                            echo '<span style="color: #666;">WP_DEBUG:</span> <span style="color: #00a32a;">Enabled</span><br>';
+                                            echo '<span style="color: #666;">Expected at:</span> <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;">' . $debug_log . '</code><br>';
+                                            echo '<span style="color: #666;">WP_DEBUG_LOG:</span> <span style="color: #d63638;">' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</span><br>';
+                                            echo '<small style="color: #856404;">Check your wp-config.php settings</small>';
+                                        }
+                                    }
+                                }
+                                ?>
                             </div>
                         </div>
                         
@@ -1006,51 +1054,47 @@ class BugSquasher
                             <?php endif; ?>
                         </div>
                         <?php endif; ?>
+                    </div>
+                    
+                    <!-- Debug Toggles Wrapper Box -->
+                    <div class="debug-toggles-wrapper" style="background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin-top: 15px;">
+                        <h4 style="margin: 0 0 15px 0; color: #3C467B; font-weight: 600;">Debug Settings Controls</h4>
                         
-                        <div style="margin-bottom: 10px; font-size: 12px; color: #666;">
-                            <strong>Environment:</strong> <?php echo $environment_label; ?>
-                            <?php if ($is_development): ?>
-                                <span style="color: #00a32a;">✓ Safe for debug modification</span>
-                            <?php elseif ($is_staging): ?>
-                                <span style="color: #dba617;">⚠ Use caution</span>
-                            <?php else: ?>
-                                <span style="color: #d63638;">🔒 Modification restricted</span>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="debug-toggle-item <?php echo $disabled_class; ?>">
-                            <label for="wp-debug-toggle">WP_DEBUG</label>
-                            <label class="debug-toggle-switch">
-                                <input type="checkbox" id="wp-debug-toggle" 
-                                       <?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'checked' : ''; ?>
-                                       <?php echo $disabled_attr; ?>>
-                                <span class="debug-toggle-slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="debug-toggle-item <?php echo $disabled_class; ?>">
-                            <label for="wp-debug-log-toggle">WP_DEBUG_LOG</label>
-                            <label class="debug-toggle-switch">
-                                <input type="checkbox" id="wp-debug-log-toggle" 
-                                       <?php echo (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) ? 'checked' : ''; ?>
-                                       <?php echo $disabled_attr; ?>>
-                                <span class="debug-toggle-slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="debug-toggle-item <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'debug-item-disabled' : ''; ?>">
-                            <label for="wp-debug-display-toggle">WP_DEBUG_DISPLAY</label>
-                            <label class="debug-toggle-switch">
-                                <input type="checkbox" id="wp-debug-display-toggle" 
-                                       <?php echo (defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) ? 'checked' : ''; ?>
-                                       <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'disabled' : ''; ?>>
-                                <span class="debug-toggle-slider"></span>
-                            </label>
-                            <?php if (!$config_info['writable']): ?>
-                                <small style="color: #666; font-size: 11px;">wp-config.php not writable</small>
-                            <?php elseif (!defined('WP_DEBUG') || !WP_DEBUG): ?>
-                                <small style="color: #666; font-size: 11px;">Requires WP_DEBUG to be enabled</small>
-                            <?php endif; ?>
+                        <div class="debug-toggles-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div class="debug-toggle-item <?php echo $disabled_class; ?>">
+                                <label for="wp-debug-toggle">WP_DEBUG</label>
+                                <label class="debug-toggle-switch">
+                                    <input type="checkbox" id="wp-debug-toggle" 
+                                           <?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'checked' : ''; ?>
+                                           <?php echo $disabled_attr; ?>>
+                                    <span class="debug-toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="debug-toggle-item <?php echo $disabled_class; ?>">
+                                <label for="wp-debug-log-toggle">WP_DEBUG_LOG</label>
+                                <label class="debug-toggle-switch">
+                                    <input type="checkbox" id="wp-debug-log-toggle" 
+                                           <?php echo (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) ? 'checked' : ''; ?>
+                                           <?php echo $disabled_attr; ?>>
+                                    <span class="debug-toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="debug-toggle-item <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'debug-item-disabled' : ''; ?>">
+                                <label for="wp-debug-display-toggle">WP_DEBUG_DISPLAY</label>
+                                <label class="debug-toggle-switch">
+                                    <input type="checkbox" id="wp-debug-display-toggle" 
+                                           <?php echo (defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) ? 'checked' : ''; ?>
+                                           <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'disabled' : ''; ?>>
+                                    <span class="debug-toggle-slider"></span>
+                                </label>
+                                <?php if (!$config_info['writable']): ?>
+                                    <small style="color: #666; font-size: 11px;">wp-config.php not writable</small>
+                                <?php elseif (!defined('WP_DEBUG') || !WP_DEBUG): ?>
+                                    <small style="color: #666; font-size: 11px;">Requires WP_DEBUG to be enabled</small>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     
@@ -1088,6 +1132,22 @@ class BugSquasher
                     <label><input type="checkbox" class="error-type-filter" value="firewall"> Firewall</label>
                     <label><input type="checkbox" class="error-type-filter" value="cron"> Cron</label>
                     <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
+                </div>
+
+                <div class="bugsquasher-controls">
+                    <button id="load-errors" class="button button-primary">Load Recent Errors</button>
+                    <select id="error-limit">
+                        <option value="25" selected>Show 25 recent</option>
+                        <option value="50">Show 50 recent</option>
+                        <option value="100">Show 100 recent</option>
+                        <option value="250">Show 250 recent</option>
+                        <option value="500">Show 500 recent</option>
+                        <option value="1000">Show 1,000 recent</option>
+                        <option value="2000">Show 2,000 recent</option>
+                        <option value="3000">Show 3,000 recent (max)</option>
+                    </select>
+                    <button id="clear-log" class="button">Clear Log</button>
+                    <button id="export-errors" class="button">Export Errors</button>
                 </div>
 
                 <div class="bugsquasher-log-container">
