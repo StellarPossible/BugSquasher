@@ -339,12 +339,18 @@ class BugSquasher
     ?>
         <style type="text/css">
             /* BugSquasher Admin Styles - Embedded to avoid MIME issues */
-            
+            :root {
+                --bs-main: #80A1BA;
+                --bs-second: #91C4C3;
+                --bs-accessory-1: #B4DEBD;
+                --bs-accessory-2: #FFF7DD;
+            }
+
             /* Dashboard Header Styles */
             .bugsquasher-dashboard-header {
                 margin-bottom: 20px;
             }
-            
+
             .bugsquasher-dashboard-header h1.wp-heading-inline {
                 font-size: 23px;
                 font-weight: 400;
@@ -352,24 +358,31 @@ class BugSquasher
                 padding: 9px 0 4px 0;
                 line-height: 1.3;
             }
-            
+
             .bugsquasher-dashboard-header .wp-header-end {
                 border: 0;
                 height: 0;
                 margin: -4px 0 16px;
             }
-            
+
             /* App Wrapper Styles */
             .bugsquasher-app-wrapper {
                 padding: 5px;
+                box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
             }
-            
+
             /* Header and Logo Styles */
             .bugsquasher-header {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 15px;
                 color: white;
-                padding: 20px;
-                border-radius: 8px;
-                margin-bottom: 20px;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 5px;
                 box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
             }
 
@@ -377,15 +390,19 @@ class BugSquasher
                 display: flex;
                 align-items: center;
                 gap: 20px;
+                flex: 1;
+                min-width: 300px;
+            }
+
+            .spicon {
+                max-width: 2.5rem;
+                vertical-align: middle;
             }
 
             .bugsquasher-logo {
-                width: 5rem;
-                height: 5rem;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                max-width: 10rem;
+                border-radius: 5px;
                 object-fit: cover;
-                padding: 5px;
             }
 
             .bugsquasher-title-section h1 {
@@ -402,22 +419,154 @@ class BugSquasher
                 font-style: italic;
             }
 
+            .bugsquasher-filters {
+                background: white;
+                padding: 15px;
+                border: 1px solid #80A1BA;
+                border-radius: 6px;
+                margin-bottom: 20px;
+            }
+
+            .filter-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .bugsquasher-filters h3 {
+                margin: 0;
+                color: #80A1BA;
+                font-weight: 600;
+            }
+
+            /* Select All/Deselect All Button Styles */
+            .select-all-btn {
+                position: relative;
+                font-weight: 500;
+                padding: 8px 16px !important;
+                border-radius: 5px !important;
+                border: 2px solid !important;
+                transition: all 0.3s ease !important;
+                cursor: pointer;
+                min-width: 120px;
+                text-align: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Select All State (when some/none are selected) */
+            .select-all-btn[data-state="select"] {
+                background: #91C4C3 !important;
+                border-color: #91C4C3 !important;
+                color: white !important;
+            }
+
+            .select-all-btn[data-state="select"]:hover {
+                background: #80A1BA !important;
+                border-color: #80A1BA !important;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(128, 161, 186, 0.3);
+            }
+
+            /* Deselect All State (when all are selected) */
+            .select-all-btn[data-state="deselect"] {
+                background: #d63638 !important;
+                border-color: #d63638 !important;
+                color: white !important;
+            }
+
+            .select-all-btn[data-state="deselect"]:hover {
+                background: #b32d2e !important;
+                border-color: #b32d2e !important;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(214, 54, 56, 0.3);
+            }
+
+            /* Partial State (mixed selection) */
+            .select-all-btn[data-state="partial"] {
+                background: #B4DEBD !important;
+                border-color: #B4DEBD !important;
+                color: #2c3e50 !important;
+            }
+
+            .select-all-btn[data-state="partial"]:hover {
+                background: #91C4C3 !important;
+                border-color: #91C4C3 !important;
+                color: white !important;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
+            }
+
+            /* Button text animation */
+            .select-all-btn .btn-text {
+                display: inline-block;
+                transition: all 0.2s ease;
+            }
+
+            .filter-checkboxes {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+
+            .bugsquasher-filters label {
+                display: flex;
+                align-items: center;
+                margin: 0;
+                padding: 8px 12px;
+                background: #FFF7DD;
+                border-radius: 4px;
+                transition: all 0.2s ease;
+                color: #80A1BA;
+                font-weight: 500;
+                border: 1px solid transparent;
+            }
+
+            .bugsquasher-filters label:hover {
+                background: #B4DEBD;
+                border-color: #91C4C3;
+                transform: translateY(-1px);
+            }
+
+            .bugsquasher-filters input[type="checkbox"] {
+                margin-right: 8px;
+                accent-color: #80A1BA;
+                transform: scale(1.1);
+            }
+
             @media (max-width: 768px) {
                 .bugsquasher-logo-container {
                     flex-direction: column;
                     text-align: center;
                     gap: 15px;
                 }
-            
+
                 .bugsquasher-title-section h1 {
                     font-size: 1.8em;
+                }
+
+                .filter-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                    text-align: center;
+                }
+
+                .select-all-btn {
+                    width: 100%;
+                    margin-top: 10px;
+                }
+
+                .filter-checkboxes {
+                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                    gap: 8px;
                 }
             }
 
             .bugsquasher-controls {
                 background: #fff;
                 padding: 15px;
-                border: 1px solid #ccd0d4;
                 margin-bottom: 20px;
                 display: flex;
                 align-items: center;
@@ -446,7 +595,7 @@ class BugSquasher
                     max-width: 100%;
                     font-size: 12px;
                 }
-                
+
                 .bugsquasher-info small {
                     font-size: 10px;
                 }
@@ -555,15 +704,15 @@ class BugSquasher
                 border-radius: 50%;
             }
 
-            input:checked + .debug-toggle-slider {
+            input:checked+.debug-toggle-slider {
                 background-color: #3C467B;
             }
 
-            input:checked + .debug-toggle-slider:before {
+            input:checked+.debug-toggle-slider:before {
                 transform: translateX(26px);
             }
 
-            input:disabled + .debug-toggle-slider {
+            input:disabled+.debug-toggle-slider {
                 opacity: 0.5;
                 cursor: not-allowed;
             }
@@ -613,13 +762,6 @@ class BugSquasher
                 margin-bottom: 10px;
                 color: #3C467B;
                 font-weight: 600;
-            }
-
-            .bugsquasher-filters label {
-                display: inline-block;
-                margin-right: 15px;
-                margin-bottom: 5px;
-                color: #3C467B;
             }
 
             /* Missing types notification */
@@ -871,11 +1013,11 @@ class BugSquasher
                 .debug-toggles-grid {
                     grid-template-columns: 1fr !important;
                 }
-                
+
                 .debug-toggle-item {
                     padding: 15px 10px !important;
                 }
-                
+
                 .debug-toggles-wrapper {
                     padding: 15px !important;
                 }
@@ -885,13 +1027,135 @@ class BugSquasher
                 .debug-toggles-grid {
                     gap: 10px !important;
                 }
-                
+
                 .debug-toggle-item {
                     padding: 12px 8px !important;
                 }
-                
+
                 .debug-toggle-item label {
                     font-size: 14px;
+                }
+            }
+
+            /* Security Status Box in Header - Improved layout */
+            .bugsquasher-header {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 15px;
+                color: white;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 5px;
+                box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
+            }
+
+            .bugsquasher-logo-container {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                flex: 1;
+                min-width: 300px;
+            }
+
+            .bugsquasher-security-status {
+                margin: 0;
+                padding: 10px;
+                background: rgba(240, 246, 252, 0.9);
+                border-radius: 5px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: #333;
+                flex: 1;
+                max-width: 500px;
+            }
+
+            .bugsquasher-security-status strong {
+                color: #0969da;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .bugsquasher-security-status .status-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 3px;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .bugsquasher-security-status .status-label {
+                color: #666;
+                margin-right: 10px;
+                min-width: 110px;
+                font-weight: 500;
+            }
+
+            .bugsquasher-security-status .status-value {
+                font-family: monospace;
+                flex: 1;
+            }
+
+            .bugsquasher-security-status .security-badge {
+                background: #f6f8fa;
+                padding: 1px 5px;
+                border-radius: 3px;
+                font-family: monospace;
+                font-size: 11px;
+                display: inline-block;
+                margin-right: 5px;
+            }
+
+            /* Responsive layout improvements */
+            @media (max-width: 992px) {
+                .bugsquasher-header {
+                    flex-direction: column;
+                }
+                
+                .bugsquasher-security-status {
+                    max-width: 100%;
+                    width: 100%;
+                    margin-top: 10px;
+                }
+                
+                .bugsquasher-security-status .status-row {
+                    margin-bottom: 5px;
+                }
+                
+                .bugsquasher-security-status .status-label {
+                    min-width: 100px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .bugsquasher-logo-container {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 15px;
+                }
+
+                .bugsquasher-title-section h1 {
+                    font-size: 1.8em;
+                }
+                
+                .bugsquasher-security-status {
+                    font-size: 12px;
+                }
+                
+                .bugsquasher-security-status .status-row {
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                
+                .bugsquasher-security-status .status-label {
+                    font-weight: 600;
+                    margin-bottom: 0;
+                }
+                
+                .bugsquasher-security-status .status-value {
+                    padding-left: 8px;
                 }
             }
         </style>
@@ -905,249 +1169,264 @@ class BugSquasher
                 <div class="bugsquasher-container">
                     <div class="bugsquasher-header">
                         <div class="bugsquasher-logo-container">
-                            <img src="<?php echo BUGSQUASHER_PLUGIN_URL; ?>assets/images/BugSquasherLogo.svg" alt="BugSquasher Logo" class="bugsquasher-logo">
+                            <img src="<?php echo BUGSQUASHER_PLUGIN_URL; ?>assets/images/BugSquasherLogo.png" alt="BugSquasher Logo" class="bugsquasher-logo">
                             <div class="bugsquasher-title-section">
                                 <h1>BugSquasher</h1>
-                                <p class="bugsquasher-subtitle">WordPress Debug Log Analyzer</p>
+                                <p class="bugsquasher-subtitle">WordPress Debug Log Analyzer by <a title="StellarPossible" href="https://stellarpossible.com" target="_blank"><img class="spicon" src="<?php echo BUGSQUASHER_PLUGIN_URL; ?>assets/images/spicon.png" alt="SPiCon Logo"></a></p>
                             </div>
                         </div>
-                    </div>
 
-                <div class="bugsquasher-debug-controls">
-                    <h3>
-                        <span>WordPress Debug Settings</span>
-                        <small style="font-weight: normal; font-size: 12px; opacity: 0.8;">(Modifies wp-config.php)</small>
-                    </h3>
-                    
-                    <div class="debug-toggle-container">
-                        <?php 
+                        <?php
                         $config_info = $this->get_wp_config_security_info();
                         $is_production = $this->is_production_environment();
                         $is_development = $this->is_development_environment();
                         $is_staging = $this->is_staging_environment();
-                        
+                        $environment_label = $is_production ? 'Production' : ($is_staging ? 'Staging' : ($is_development ? 'Development' : 'Unknown'));
+                        $debug_log = $this->get_debug_log_path();
+                        ?>
+
+                        <!-- Security Status Information (moved to header) -->
+                        <div class="bugsquasher-security-status">
+                            <strong>📁 wp-config.php & Debug Log Security Status</strong>
+                            <div class="status-row">
+                                <span class="status-label">File:</span>
+                                <span class="status-value"><?php echo $config_info['path']; ?></span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-label">Permissions:</span>
+                                <span class="status-value">
+                                    <span class="security-badge"><?php echo $config_info['octal']; ?></span>
+                                    <span style="color: <?php echo $config_info['security_level'] === 'secure' ? '#00a32a' : ($config_info['security_level'] === 'unsafe' ? '#d63638' : '#dba617'); ?>;">
+                                        <?php
+                                        switch ($config_info['security_level']) {
+                                            case 'secure':
+                                                echo '🔒 Secure (Production)';
+                                                break;
+                                            case 'very_secure':
+                                                echo '🔐 Very Secure (Production)';
+                                                break;
+                                            case 'development':
+                                                echo '🔧 Development Mode';
+                                                break;
+                                            case 'unsafe':
+                                                echo '⚠️ Unsafe Permissions';
+                                                break;
+                                            default:
+                                                echo '❓ Unknown';
+                                                break;
+                                        }
+                                        ?>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-label">Environment:</span>
+                                <span class="status-value">
+                                    <span class="security-badge"><?php echo $environment_label; ?></span>
+                                    <?php if ($is_development): ?>
+                                        <span style="color: #00a32a;">✓ Safe for debug modification</span>
+                                    <?php elseif ($is_staging): ?>
+                                        <span style="color: #dba617;">⚠ Use caution</span>
+                                    <?php else: ?>
+                                        <span style="color: #d63638;">🔒 Modification restricted</span>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <div class="status-row" style="margin-top: 8px;">
+                                <span class="status-label" style="color: #0969da;"><strong>🐛 Debug Log:</strong></span>
+                                <span class="status-value">
+                                    <?php
+                                    if ($debug_log && file_exists($debug_log)) {
+                                        $size = filesize($debug_log);
+                                        $size_formatted = size_format($size);
+                                        echo '<span style="color: #00a32a; font-weight: bold;">Found (' . $size_formatted . ')</span>';
+                                    } else {
+                                        echo '<span style="color: #d63638; font-weight: bold;">' . ($debug_log ? 'Not found' : 'Not configured') . '</span>';
+                                    }
+                                    ?>
+                                </span>
+                            </div>
+                            <?php if (defined('WP_DEBUG') && WP_DEBUG): ?>
+                                <div class="status-row">
+                                    <span class="status-label">WP_DEBUG:</span>
+                                    <span class="status-value">
+                                        <span style="color: #00a32a;">Enabled</span>
+                                        <?php if ($debug_log): ?>
+                                            | Path: <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;"><?php echo $debug_log; ?></code>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="bugsquasher-debug-controls">
+                        <h3>
+                            <span>WordPress Debug Settings</span>
+                            <small style="font-weight: normal; font-size: 12px; opacity: 0.8;">(Modifies wp-config.php)</small>
+                        </h3>
+
+                        <?php
                         // Security: Disable toggles based on file permissions and environment
                         $security_disabled = $is_production || $config_info['likely_production'];
                         $disabled_attr = (!$config_info['writable'] || $security_disabled) ? 'disabled' : '';
                         $disabled_class = (!$config_info['writable'] || $security_disabled) ? 'debug-item-disabled' : '';
-                        
-                        $environment_label = $is_production ? 'Production' : ($is_staging ? 'Staging' : ($is_development ? 'Development' : 'Unknown'));
-                        ?>
-                        
-                        <!-- File Permissions Information -->
-                        <div style="background: #f0f6fc; border: 1px solid #0969da; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
-                            <strong>📁 wp-config.php & Debug Log Security Status</strong><br>
-                            <div style="margin: 8px 0; font-family: monospace; font-size: 13px;">
-                                <span style="color: #666;">File:</span> <?php echo $config_info['path']; ?><br>
-                                <span style="color: #666;">Permissions:</span> 
-                                <span style="background: #f6f8fa; padding: 2px 6px; border-radius: 3px;">
-                                    <?php echo $config_info['octal']; ?>
-                                </span>
-                                <span style="color: <?php echo $config_info['security_level'] === 'secure' ? '#00a32a' : ($config_info['security_level'] === 'unsafe' ? '#d63638' : '#dba617'); ?>;">
-                                    <?php 
-                                    switch($config_info['security_level']) {
-                                        case 'secure': echo '🔒 Secure (Production)'; break;
-                                        case 'very_secure': echo '🔐 Very Secure (Production)'; break;
-                                        case 'development': echo '🔧 Development Mode'; break;
-                                        case 'unsafe': echo '⚠️ Unsafe Permissions'; break;
-                                        default: echo '❓ Unknown'; break;
-                                    }
-                                    ?>
-                                </span><br>
-                                <span style="color: #666;">Environment:</span> 
-                                <span style="background: #f6f8fa; padding: 2px 6px; border-radius: 3px;">
-                                    <?php echo $environment_label; ?>
-                                </span>
-                                <?php if ($is_development): ?>
-                                    <span style="color: #00a32a;">✓ Safe for debug modification</span>
-                                <?php elseif ($is_staging): ?>
-                                    <span style="color: #dba617;">⚠ Use caution</span>
+
+                        // Warning banners - now at top of debug controls section
+                        if ($security_disabled): ?>
+                            <div class="bugsquasher-production-warning">
+                                <strong>🔒 Production Environment Detected</strong><br>
+                                <?php if ($config_info['octal'] === '644' || $config_info['octal'] === '600'): ?>
+                                    wp-config.php has secure permissions (<?php echo $config_info['octal']; ?>), indicating this is a production environment.<br>
+                                    <small>Debug setting modification is disabled for security reasons.</small>
                                 <?php else: ?>
-                                    <span style="color: #d63638;">🔒 Modification restricted</span>
+                                    Debug setting modification is disabled for security reasons in production environments.<br>
+                                    <small>To modify debug settings, please use staging/development environment or edit wp-config.php manually.</small>
                                 <?php endif; ?>
-                                <br><br>
-                                <strong style="color: #0969da;">🐛 Debug Log Status:</strong><br>
-                                <?php
-                                $debug_log = $this->get_debug_log_path();
-                                if ($debug_log && file_exists($debug_log)) {
-                                    $size = filesize($debug_log);
-                                    $size_formatted = size_format($size);
-                                    echo '<span style="color: #00a32a; font-weight: bold;">Debug log found (' . $size_formatted . ')</span><br>';
-                                    
-                                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                                        echo '<span style="color: #666;">WP_DEBUG:</span> <span style="color: #00a32a;">Enabled</span> | ';
-                                        echo '<span style="color: #666;">Path:</span> <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;">' . $debug_log . '</code><br>';
-                                        echo '<span style="color: #666;">PHP Error Log:</span> <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;">' . ini_get('error_log') . '</code><br>';
-                                        echo '<span style="color: #666;">Log Errors:</span> <span style="color: #00a32a;">' . (ini_get('log_errors') ? 'On' : 'Off') . '</span>';
-                                    }
-                                } else {
-                                    if (!$debug_log) {
-                                        echo '<span style="color: #d63638; font-weight: bold;">Debug log not configured</span><br>';
-                                        if (defined('WP_DEBUG') && WP_DEBUG) {
-                                            echo '<span style="color: #666;">WP_DEBUG:</span> <span style="color: #00a32a;">Enabled</span><br>';
-                                            echo '<span style="color: #666;">WP_DEBUG_LOG:</span> <span style="color: #d63638;">' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</span><br>';
-                                            echo '<small style="color: #856404;">Set WP_DEBUG_LOG to true in wp-config.php to enable logging</small>';
-                                        }
-                                    } else {
-                                        echo '<span style="color: #d63638; font-weight: bold;">Debug log not found</span><br>';
-                                        if (defined('WP_DEBUG') && WP_DEBUG) {
-                                            echo '<span style="color: #666;">WP_DEBUG:</span> <span style="color: #00a32a;">Enabled</span><br>';
-                                            echo '<span style="color: #666;">Expected at:</span> <code style="background: #f6f8fa; padding: 1px 4px; border-radius: 2px;">' . $debug_log . '</code><br>';
-                                            echo '<span style="color: #666;">WP_DEBUG_LOG:</span> <span style="color: #d63638;">' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</span><br>';
-                                            echo '<small style="color: #856404;">Check your wp-config.php settings</small>';
-                                        }
-                                    }
-                                }
-                                ?>
                             </div>
-                        </div>
-                        
-                        <?php if ($security_disabled): ?>
-                        <div style="background: #FFE6E6; border: 1px solid #d63638; border-radius: 4px; padding: 15px; margin-bottom: 15px; color: #d63638;">
-                            <strong>🔒 Production Environment Detected</strong><br>
-                            <?php if ($config_info['octal'] === '644' || $config_info['octal'] === '600'): ?>
-                                wp-config.php has secure permissions (<?php echo $config_info['octal']; ?>), indicating this is a production environment.<br>
-                                <small>Debug setting modification is disabled for security reasons.</small>
-                            <?php else: ?>
-                                Debug setting modification is disabled for security reasons in production environments.<br>
-                                <small>To modify debug settings, please use staging/development environment or edit wp-config.php manually.</small>
-                            <?php endif; ?>
-                        </div>
                         <?php elseif ($config_info['writable'] && !$security_disabled): ?>
-                        <div style="background: #FFF3CD; border: 1px solid #ffc107; border-radius: 4px; padding: 15px; margin-bottom: 15px; color: #856404;">
-                            <strong>⚠️ Development Environment Confirmation Required</strong><br>
-                            wp-config.php is writable (<?php echo $config_info['octal']; ?>). Before enabling debug settings, please confirm:<br>
-                            <div style="margin: 10px 0;">
-                                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
-                                    <input type="checkbox" id="dev-environment-confirm" style="margin: 0;">
-                                    <span>I confirm this is a development environment and it's safe to modify debug settings</span>
-                                </label>
+                            <div class="bugsquasher-development-warning">
+                                <strong>⚠️ Development Environment Confirmation Required</strong><br>
+                                wp-config.php is writable (<?php echo $config_info['octal']; ?>). Before enabling debug settings, please confirm:<br>
+                                <div style="margin: 10px 0;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                                        <input type="checkbox" id="dev-environment-confirm" style="margin: 0;">
+                                        <span>I confirm this is a development environment and it's safe to modify debug settings</span>
+                                    </label>
+                                </div>
+                                <small style="display: block; margin-top: 8px;">
+                                    <strong>If this is a development environment but you see permission errors:</strong><br>
+                                    Try: <code>chmod 664 <?php echo $config_info['path']; ?></code>
+                                </small>
                             </div>
-                            <small style="display: block; margin-top: 8px;">
-                                <strong>If this is a development environment but you see permission errors:</strong><br>
-                                Try: <code>chmod 664 <?php echo $config_info['path']; ?></code>
-                            </small>
-                        </div>
                         <?php elseif (!$config_info['writable']): ?>
-                        <div style="background: #FFE6E6; border: 1px solid #d63638; border-radius: 4px; padding: 15px; margin-bottom: 15px; color: #d63638;">
-                            <strong>🔒 wp-config.php Not Writable</strong><br>
-                            File permissions (<?php echo $config_info['octal']; ?>) prevent modification. 
-                            <?php if ($this->is_docker_environment()): ?>
-                                <br><small>Docker detected. Try: <code>docker exec -it &lt;container&gt; chmod 664 <?php echo $config_info['path']; ?></code></small>
-                            <?php else: ?>
-                                <br><small>For development: <code>chmod 664 <?php echo $config_info['path']; ?></code></small>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Debug Toggles Wrapper Box -->
-                    <div class="debug-toggles-wrapper" style="background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin-top: 15px;">
-                        <h4 style="margin: 0 0 15px 0; color: #3C467B; font-weight: 600;">Debug Settings Controls</h4>
-                        
-                        <div class="debug-toggles-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                            <div class="debug-toggle-item <?php echo $disabled_class; ?>">
-                                <label for="wp-debug-toggle">WP_DEBUG</label>
-                                <label class="debug-toggle-switch">
-                                    <input type="checkbox" id="wp-debug-toggle" 
-                                           <?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'checked' : ''; ?>
-                                           <?php echo $disabled_attr; ?>>
-                                    <span class="debug-toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="debug-toggle-item <?php echo $disabled_class; ?>">
-                                <label for="wp-debug-log-toggle">WP_DEBUG_LOG</label>
-                                <label class="debug-toggle-switch">
-                                    <input type="checkbox" id="wp-debug-log-toggle" 
-                                           <?php echo (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) ? 'checked' : ''; ?>
-                                           <?php echo $disabled_attr; ?>>
-                                    <span class="debug-toggle-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="debug-toggle-item <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'debug-item-disabled' : ''; ?>">
-                                <label for="wp-debug-display-toggle">WP_DEBUG_DISPLAY</label>
-                                <label class="debug-toggle-switch">
-                                    <input type="checkbox" id="wp-debug-display-toggle" 
-                                           <?php echo (defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) ? 'checked' : ''; ?>
-                                           <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'disabled' : ''; ?>>
-                                    <span class="debug-toggle-slider"></span>
-                                </label>
-                                <?php if (!$config_info['writable']): ?>
-                                    <small style="color: #666; font-size: 11px;">wp-config.php not writable</small>
-                                <?php elseif (!defined('WP_DEBUG') || !WP_DEBUG): ?>
-                                    <small style="color: #666; font-size: 11px;">Requires WP_DEBUG to be enabled</small>
+                            <div class="bugsquasher-production-warning">
+                                <strong>🔒 wp-config.php Not Writable</strong><br>
+                                File permissions (<?php echo $config_info['octal']; ?>) prevent modification.
+                                <?php if ($this->is_docker_environment()): ?>
+                                    <br><small>Docker detected. Try: <code>docker exec -it &lt;container&gt; chmod 664 <?php echo $config_info['path']; ?></code></small>
+                                <?php else: ?>
+                                    <br><small>For development: <code>chmod 664 <?php echo $config_info['path']; ?></code></small>
                                 <?php endif; ?>
                             </div>
+                        <?php endif; ?>
+
+                        <div class="debug-toggle-container">
+                            <!-- Debug Toggles Wrapper Box -->
+                            <div class="debug-toggles-wrapper" style="background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin-top: 15px;">
+                                <h4 style="margin: 0 0 15px 0; color: #3C467B; font-weight: 600;">Debug Settings Controls</h4>
+
+                                <div class="debug-toggles-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                    <div class="debug-toggle-item <?php echo $disabled_class; ?>">
+                                        <label for="wp-debug-toggle">WP_DEBUG</label>
+                                        <label class="debug-toggle-switch">
+                                            <input type="checkbox" id="wp-debug-toggle"
+                                                <?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'checked' : ''; ?>
+                                                <?php echo $disabled_attr; ?>>
+                                            <span class="debug-toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="debug-toggle-item <?php echo $disabled_class; ?>">
+                                        <label for="wp-debug-log-toggle">WP_DEBUG_LOG</label>
+                                        <label class="debug-toggle-switch">
+                                            <input type="checkbox" id="wp-debug-log-toggle"
+                                                <?php echo (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) ? 'checked' : ''; ?>
+                                                <?php echo $disabled_attr; ?>>
+                                            <span class="debug-toggle-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="debug-toggle-item <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'debug-item-disabled' : ''; ?>">
+                                        <label for="wp-debug-display-toggle">WP_DEBUG_DISPLAY</label>
+                                        <label class="debug-toggle-switch">
+                                            <input type="checkbox" id="wp-debug-display-toggle"
+                                                <?php echo (defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) ? 'checked' : ''; ?>
+                                                <?php echo (!defined('WP_DEBUG') || !WP_DEBUG || !$config_info['writable']) ? 'disabled' : ''; ?>>
+                                            <span class="debug-toggle-slider"></span>
+                                        </label>
+                                        <?php if (!$config_info['writable']): ?>
+                                            <small style="color: #666; font-size: 11px;">wp-config.php not writable</small>
+                                        <?php elseif (!defined('WP_DEBUG') || !WP_DEBUG): ?>
+                                            <small style="color: #666; font-size: 11px;">Requires WP_DEBUG to be enabled</small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <?php 
-                    $wp_config_path = ABSPATH . 'wp-config.php';
-                    $config_writable = file_exists($wp_config_path) && is_writable($wp_config_path);
-                    ?>
-                    
-                    <?php if (!$config_writable): ?>
-                    <div class="debug-warning" style="background: #FFE6E6; border-color: #d63638; color: #d63638;">
-                        <strong>⚠️ Permission Issue:</strong> wp-config.php is not writable. Debug toggles are disabled. 
-                        <?php if ($this->is_docker_environment()): ?>
-                            <br><small>Docker detected. Try: <code>docker exec -it &lt;container&gt; chown www-data:www-data <?php echo $wp_config_path; ?> && docker exec -it &lt;container&gt; chmod 664 <?php echo $wp_config_path; ?></code></small>
+
+                        <?php
+                        $wp_config_path = ABSPATH . 'wp-config.php';
+                        $config_writable = file_exists($wp_config_path) && is_writable($wp_config_path);
+                        ?>
+
+                        <?php if (!$config_writable && !$security_disabled): ?>
+                            <div class="bugsquasher-debug-warning">
+                                <strong>⚠️ Permission Issue:</strong> wp-config.php is not writable. Debug toggles are disabled.
+                                <?php if ($this->is_docker_environment()): ?>
+                                    <br><small>Docker detected. Try: <code>docker exec -it &lt;container&gt; chown www-data:www-data <?php echo $wp_config_path; ?> && docker exec -it &lt;container&gt; chmod 664 <?php echo $wp_config_path; ?></code></small>
+                                <?php else: ?>
+                                    <br><small>Contact your hosting provider to adjust file permissions for <?php echo $wp_config_path; ?></small>
+                                <?php endif; ?>
+                            </div>
                         <?php else: ?>
-                            <br><small>Contact your hosting provider to adjust file permissions for <?php echo $wp_config_path; ?></small>
+                            <div class="bugsquasher-debug-warning">
+                                <strong>⚠️ Warning:</strong> These settings modify your wp-config.php file. Changes take effect immediately but may require a page refresh.
+                                Always backup your site before making changes to debug settings.
+                            </div>
                         <?php endif; ?>
                     </div>
-                    <?php else: ?>
-                    <div class="debug-warning">
-                        <strong>⚠️ Warning:</strong> These settings modify your wp-config.php file. Changes take effect immediately but may require a page refresh. 
-                        Always backup your site before making changes to debug settings.
+
+                    <div class="bugsquasher-filters">
+                        <div class="filter-header">
+                            <h3>Filter by Error Type</h3>
+                            <button id="toggle-all-filters" class="button button-secondary select-all-btn" data-state="partial">
+                                <span class="btn-text">Select All</span>
+                            </button>
+                        </div>
+                        <div class="filter-checkboxes">
+                            <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
+                            <label><input type="checkbox" class="error-type-filter" value="parse"> Parse Errors</label>
+                            <label><input type="checkbox" class="error-type-filter" value="critical" checked> Critical</label>
+                            <label><input type="checkbox" class="error-type-filter" value="error" checked> Errors</label>
+                            <label><input type="checkbox" class="error-type-filter" value="warning"> Warnings</label>
+                            <label><input type="checkbox" class="error-type-filter" value="notice"> Notices</label>
+                            <label><input type="checkbox" class="error-type-filter" value="deprecated"> Deprecated</label>
+                            <label><input type="checkbox" class="error-type-filter" value="firewall"> Firewall</label>
+                            <label><input type="checkbox" class="error-type-filter" value="cron"> Cron</label>
+                            <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
+                        </div>
                     </div>
-                    <?php endif; ?>
-                </div>
 
-                <div class="bugsquasher-filters">
-                    <h3>Filter by Error Type</h3>
-                    <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
-                    <label><input type="checkbox" class="error-type-filter" value="parse"> Parse Errors</label>
-                    <label><input type="checkbox" class="error-type-filter" value="critical" checked> Critical</label>
-                    <label><input type="checkbox" class="error-type-filter" value="error" checked> Errors</label>
-                    <label><input type="checkbox" class="error-type-filter" value="warning"> Warnings</label>
-                    <label><input type="checkbox" class="error-type-filter" value="notice"> Notices</label>
-                    <label><input type="checkbox" class="error-type-filter" value="deprecated"> Deprecated</label>
-                    <label><input type="checkbox" class="error-type-filter" value="firewall"> Firewall</label>
-                    <label><input type="checkbox" class="error-type-filter" value="cron"> Cron</label>
-                    <label><input type="checkbox" class="error-type-filter" value="info" checked> Info</label>
-                </div>
+                    <div class="bugsquasher-controls">
+                        <button id="load-errors" class="button button-primary">Load Recent Errors</button>
+                        <select id="error-limit">
+                            <option value="25" selected>Show 25 recent</option>
+                            <option value="50">Show 50 recent</option>
+                            <option value="100">Show 100 recent</option>
+                            <option value="250">Show 250 recent</option>
+                            <option value="500">Show 500 recent</option>
+                            <option value="1000">Show 1,000 recent</option>
+                            <option value="2000">Show 2,000 recent</option>
+                            <option value="3000">Show 3,000 recent (max)</option>
+                        </select>
+                        <button id="clear-log" class="button">Clear Log</button>
+                        <button id="export-errors" class="button">Export Errors</button>
+                    </div>
 
-                <div class="bugsquasher-controls">
-                    <button id="load-errors" class="button button-primary">Load Recent Errors</button>
-                    <select id="error-limit">
-                        <option value="25" selected>Show 25 recent</option>
-                        <option value="50">Show 50 recent</option>
-                        <option value="100">Show 100 recent</option>
-                        <option value="250">Show 250 recent</option>
-                        <option value="500">Show 500 recent</option>
-                        <option value="1000">Show 1,000 recent</option>
-                        <option value="2000">Show 2,000 recent</option>
-                        <option value="3000">Show 3,000 recent (max)</option>
-                    </select>
-                    <button id="clear-log" class="button">Clear Log</button>
-                    <button id="export-errors" class="button">Export Errors</button>
-                </div>
-
-                <div class="bugsquasher-log-container">
-                    <div id="error-count">Click "Load Recent Errors" to start</div>
-                    <div id="missing-types-notification" style="display: none;"></div>
-                    <div id="log-content" style="display: none;"></div>
-                    <div id="loading" style="display: none; text-align: center; padding: 40px;">
-                        <p>Loading errors...</p>
+                    <div class="bugsquasher-log-container">
+                        <div id="error-count">Click "Load Recent Errors" to start</div>
+                        <div id="missing-types-notification" style="display: none;"></div>
+                        <div id="log-content" style="display: none;"></div>
+                        <div id="loading" style="display: none; text-align: center; padding: 40px;">
+                            <p>Loading errors...</p>
+                        </div>
                     </div>
                 </div>
+                <!-- End BugSquasher App Wrapper -->
             </div>
-            <!-- End BugSquasher App Wrapper -->
-        </div>
-        <!-- End Dashboard Header Wrap -->
-<?php
+            <!-- End Dashboard Header Wrap -->
+    <?php
     }
 
     /**
@@ -1403,9 +1682,9 @@ class BugSquasher
         }
 
         $result = $this->update_wp_config_setting($setting, $value);
-        
+
         error_log("BugSquasher: Update result - " . json_encode($result));
-        
+
         if ($result['success']) {
             wp_send_json_success([
                 'message' => $result['message'],
@@ -1423,9 +1702,9 @@ class BugSquasher
     private function update_wp_config_setting($setting, $value)
     {
         $wp_config_path = ABSPATH . 'wp-config.php';
-        
+
         error_log("BugSquasher: Attempting to update $setting in wp-config.php at: $wp_config_path");
-        
+
         if (!file_exists($wp_config_path)) {
             error_log("BugSquasher: wp-config.php not found at: $wp_config_path");
             return ['success' => false, 'message' => 'wp-config.php not found at expected location: ' . $wp_config_path];
@@ -1436,13 +1715,13 @@ class BugSquasher
         $file_owner = fileowner($wp_config_path);
         $file_group = filegroup($wp_config_path);
         $current_user = get_current_user();
-        
+
         if (!is_writable($wp_config_path)) {
             error_log("BugSquasher: wp-config.php is not writable");
-            
+
             $error_message = 'wp-config.php is not writable. ';
             $error_message .= 'File permissions: ' . substr(sprintf('%o', $file_perms), -4) . '. ';
-            
+
             // Provide specific suggestions based on environment
             if (defined('WP_ENV') && WP_ENV === 'development') {
                 $error_message .= 'For development, try: chmod 664 ' . $wp_config_path;
@@ -1451,7 +1730,7 @@ class BugSquasher
             } else {
                 $error_message .= 'Contact your hosting provider or system administrator to adjust file permissions.';
             }
-            
+
             return ['success' => false, 'message' => $error_message];
         }
 
@@ -1503,7 +1782,7 @@ class BugSquasher
         }
 
         return [
-            'success' => true, 
+            'success' => true,
             'message' => $setting . ' has been ' . ($value ? 'enabled' : 'disabled') . '. Changes will take effect on next page load.'
         ];
     }
@@ -1515,11 +1794,11 @@ class BugSquasher
     {
         $wp_config_path = ABSPATH . 'wp-config.php';
         $backup_path = ABSPATH . 'wp-config-backup-' . date('Y-m-d-H-i-s') . '.php';
-        
+
         if (!copy($wp_config_path, $backup_path)) {
             return ['success' => false, 'message' => 'Could not create backup of wp-config.php'];
         }
-        
+
         return ['success' => true, 'message' => 'Backup created at ' . basename($backup_path)];
     }
 
@@ -1677,7 +1956,7 @@ class BugSquasher
         // Don't filter out any entries - let them all be categorized
         // Extract and format timestamp - try multiple patterns
         $timestamp = '';
-        
+
         // Try different timestamp patterns
         if (preg_match('/^\[([^\]]+)\]/', $entry, $matches)) {
             // Format: [timestamp]
@@ -1739,10 +2018,10 @@ class BugSquasher
     private function is_docker_environment()
     {
         // Check for common Docker indicators
-        return file_exists('/.dockerenv') || 
-               (function_exists('gethostname') && strpos(gethostname(), 'docker') !== false) ||
-               isset($_ENV['DOCKER_CONTAINER']) ||
-               (function_exists('shell_exec') && strpos(shell_exec('cat /proc/1/cgroup 2>/dev/null'), 'docker') !== false);
+        return file_exists('/.dockerenv') ||
+            (function_exists('gethostname') && strpos(gethostname(), 'docker') !== false) ||
+            isset($_ENV['DOCKER_CONTAINER']) ||
+            (function_exists('shell_exec') && strpos(shell_exec('cat /proc/1/cgroup 2>/dev/null'), 'docker') !== false);
     }
 
     /**
@@ -1751,7 +2030,7 @@ class BugSquasher
     private function get_wp_config_security_info()
     {
         $wp_config_path = ABSPATH . 'wp-config.php';
-        
+
         if (!file_exists($wp_config_path)) {
             return [
                 'exists' => false,
@@ -1762,15 +2041,15 @@ class BugSquasher
                 'security_level' => 'unknown'
             ];
         }
-        
+
         $perms = fileperms($wp_config_path);
         $octal = substr(sprintf('%o', $perms), -3);
         $writable = is_writable($wp_config_path);
-        
+
         // Determine security level and production likelihood based on permissions
         $likely_production = false;
         $security_level = 'unknown';
-        
+
         switch ($octal) {
             case '644':
                 $likely_production = true;
@@ -1792,8 +2071,9 @@ class BugSquasher
                 $likely_production = !$writable;
                 $security_level = $writable ? 'development' : 'secure';
         }
-        
+
         return [
+           
             'exists' => true,
             'permissions' => $perms,
             'octal' => $octal,
@@ -1810,25 +2090,25 @@ class BugSquasher
     private function is_production_environment()
     {
         $config_info = $this->get_wp_config_security_info();
-        
+
         // Primary indicator: wp-config.php permissions
         if ($config_info['likely_production']) {
             return true;
         }
-        
+
         // Secondary checks for production environment
         $indicators = [
             // Environment variables
             (defined('WP_ENV') && WP_ENV === 'production'),
             (isset($_ENV['WP_ENV']) && $_ENV['WP_ENV'] === 'production'),
             (isset($_ENV['ENVIRONMENT']) && $_ENV['ENVIRONMENT'] === 'production'),
-            
+
             // Domain-based detection
             (isset($_SERVER['HTTP_HOST']) && !preg_match('/localhost|127\.0\.0\.1|\.local|\.test|\.dev/i', $_SERVER['HTTP_HOST'])),
-            
+
             // SSL in production assumption
             (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'),
-            
+
             // WP_DEBUG disabled (common in production)
             (!defined('WP_DEBUG') || !WP_DEBUG),
         ];

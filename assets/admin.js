@@ -407,4 +407,65 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Fix for Select All button functionality
+    $('#toggle-all-filters').on('click', function() {
+        var $button = $(this);
+        var $checkboxes = $('.error-type-filter');
+        var currentState = $button.data('state');
+        
+        if (currentState === 'select' || currentState === 'partial') {
+            // Select all
+            $checkboxes.prop('checked', true);
+            $button.data('state', 'deselect');
+            $button.find('.btn-text').text('Deselect All');
+        } else {
+            // Deselect all
+            $checkboxes.prop('checked', false);
+            $button.data('state', 'select');
+            $button.find('.btn-text').text('Select All');
+        }
+        
+        // Trigger filter update
+        updateVisibleErrors();
+    });
+    
+    // Update button state when individual filters change
+    $('.error-type-filter').on('change', function() {
+        updateSelectAllButtonState();
+    });
+    
+    function updateSelectAllButtonState() {
+        var $button = $('#toggle-all-filters');
+        var $checkboxes = $('.error-type-filter');
+        var checkedCount = $checkboxes.filter(':checked').length;
+        
+        if (checkedCount === 0) {
+            $button.data('state', 'select');
+            $button.find('.btn-text').text('Select All');
+        } else if (checkedCount === $checkboxes.length) {
+            $button.data('state', 'deselect');
+            $button.find('.btn-text').text('Deselect All');
+        } else {
+            $button.data('state', 'partial');
+            $button.find('.btn-text').text('Select All');
+        }
+    }
+    
+    // Update filter function
+    function updateVisibleErrors() {
+        var selectedTypes = [];
+        $('.error-type-filter:checked').each(function() {
+            selectedTypes.push($(this).val());
+        });
+
+        $('.log-entry').each(function() {
+            var entryType = $(this).data('type');
+            if (selectedTypes.includes(entryType)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+    
 });
