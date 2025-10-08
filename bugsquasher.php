@@ -428,12 +428,13 @@ class BugSquasher
             }
 
             .filter-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
                 margin-bottom: 15px;
-                flex-wrap: wrap;
-                gap: 10px;
+            }
+
+            .filter-title-container {
+                display: flex;
+                align-items: center;
+                gap: 12px;
             }
 
             .bugsquasher-filters h3 {
@@ -446,12 +447,12 @@ class BugSquasher
             .select-all-btn {
                 position: relative;
                 font-weight: 500;
-                padding: 8px 16px !important;
+                padding: 5px 12px !important;
                 border-radius: 5px !important;
                 border: 2px solid !important;
                 transition: all 0.3s ease !important;
                 cursor: pointer;
-                min-width: 120px;
+                min-width: 100px;
                 text-align: center;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
@@ -1272,7 +1273,15 @@ class BugSquasher
                         $disabled_attr = (!$config_info['writable'] || $security_disabled) ? 'disabled' : '';
                         $disabled_class = (!$config_info['writable'] || $security_disabled) ? 'debug-item-disabled' : '';
 
-                        // Warning banners - now at top of debug controls section
+                        // Add the warning at the very top, before any other content
+                        ?>
+                        <div class="bugsquasher-debug-warning" style="margin-bottom: 15px; margin-top: 0;">
+                            <strong>⚠️ Warning:</strong> These settings modify your wp-config.php file. Changes take effect immediately but may require a page refresh. 
+                            Always backup your site before making changes to debug settings.
+                        </div>
+                        
+                        <?php
+                        // Warning banners - now after the main warning
                         if ($security_disabled): ?>
                             <div class="bugsquasher-production-warning">
                                 <strong>🔒 Production Environment Detected</strong><br>
@@ -1379,10 +1388,12 @@ class BugSquasher
 
                     <div class="bugsquasher-filters">
                         <div class="filter-header">
-                            <h3>Filter by Error Type</h3>
-                            <button id="toggle-all-filters" class="button button-secondary select-all-btn" data-state="partial">
-                                <span class="btn-text">Select All</span>
-                            </button>
+                            <div class="filter-title-container">
+                                <h3>Filter by Error Type</h3>
+                                <button id="toggle-all-filters" class="button button-secondary select-all-btn" data-state="partial">
+                                    <span class="btn-text">Select All</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="filter-checkboxes">
                             <label><input type="checkbox" class="error-type-filter" value="fatal" checked> Fatal Errors</label>
@@ -2056,7 +2067,7 @@ class BugSquasher
                 $security_level = 'secure';
                 break;
             case '664':
-                $likely_production = false;
+                               $likely_production = false;
                 $security_level = 'development';
                 break;
             case '666':
@@ -2073,7 +2084,6 @@ class BugSquasher
         }
 
         return [
-           
             'exists' => true,
             'permissions' => $perms,
             'octal' => $octal,

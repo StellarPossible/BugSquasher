@@ -40,10 +40,66 @@
     margin-bottom: 10px;
 }
 
+/* Modified: Improved filter checkboxes layout */
+.filter-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* Modified: Improved label styling for more compact layout */
 .bugsquasher-filters label {
-    display: inline-block;
-    margin-right: 15px;
-    margin-bottom: 5px;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 6px 8px;
+    background: #f8f8f8;
+    border-radius: 4px;
+    border: 1px solid #e2e4e7;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.bugsquasher-filters label:hover {
+    background: #f0f0f0;
+    border-color: #c3c4c7;
+}
+
+.bugsquasher-filters input[type="checkbox"] {
+    margin-right: 5px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Added: Responsive adjustments for filter labels */
+@media (max-width: 782px) {
+    .filter-checkboxes {
+        gap: 6px;
+    }
+    
+    .bugsquasher-filters label {
+        font-size: 12px;
+        padding: 5px 6px;
+    }
+}
+
+/* Added: Even more compact for small screens */
+@media (max-width: 480px) {
+    .filter-checkboxes {
+        gap: 4px;
+    }
+    
+    .bugsquasher-filters label {
+        padding: 4px 5px;
+        font-size: 11px;
+    }
+    
+    .bugsquasher-filters input[type="checkbox"] {
+        margin-right: 3px;
+        transform: scale(0.9);
+    }
 }
 
 .bugsquasher-log-container {
