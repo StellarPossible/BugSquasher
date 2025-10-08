@@ -173,7 +173,7 @@ class BugSquasher
 
         $current_settings = get_option('bugsquasher_settings', BugSquasher_Config::get_default_settings());
 ?>
-        <div class="wrap">
+        <div class="bugsquasher-wrap">
             <h1>BugSquasher Settings</h1>
 
             <form method="post" action="">
@@ -361,11 +361,7 @@ class BugSquasher
             
             /* App Wrapper Styles */
             .bugsquasher-app-wrapper {
-                background: #f1f1f1;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-                padding: 20px;
-                margin-top: 10px;
+                padding: 5px;
             }
             
             /* Header and Logo Styles */
@@ -416,11 +412,6 @@ class BugSquasher
                 .bugsquasher-title-section h1 {
                     font-size: 1.8em;
                 }
-            }
-            
-            .bugsquasher-container {
-                max-width: 1200px;
-                margin: 20px 0;
             }
 
             .bugsquasher-controls {
@@ -906,12 +897,6 @@ class BugSquasher
         </style>
 
         <div class="wrap">
-            <!-- Dashboard Header -->
-            <div class="bugsquasher-dashboard-header">
-                <h1 class="wp-heading-inline">BugSquasher Dashboard</h1>
-                <hr class="wp-header-end">
-            </div>
-
             <!-- BugSquasher App Wrapper -->
             <div class="bugsquasher-app-wrapper">
                 <!-- Toast Container -->
