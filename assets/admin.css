@@ -81,6 +81,9 @@
 }
 
 .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 15px;
 }
 
@@ -159,35 +162,39 @@
     transition: all 0.2s ease;
 }
 
-.filter-checkboxes {
+.filter-buttons {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 5px;
+    gap: 10px;
 }
 
-.bugsquasher-filters label {
-    display: flex;
-    align-items: center;
-    margin: 0;
-    padding: 5px;
-    background: white;
-    border-radius: 5px;
+.error-type-filter-btn {
+    padding: 8px 12px;
+    border: 1px solid #ccd0d4;
+    background-color: #f6f7f7;
+    color: #50575e;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
     transition: all 0.2s ease;
-    color: #80A1BA;
     font-weight: 500;
-    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
 }
 
-.bugsquasher-filters label:hover {
-    background: #B4DEBD;
-    border-color: #91C4C3;
-    transform: translateY(-1px);
+.error-type-filter-btn:hover {
+    background-color: #f0f0f1;
+    border-color: #b4b9be;
 }
 
-.bugsquasher-filters input[type="checkbox"] {
-    margin-right: 8px;
-    accent-color: #80A1BA;
-    transform: scale(1.1);
+.error-type-filter-btn.active {
+    background-color: #80A1BA;
+    color: white;
+    border-color: #80A1BA;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.error-type-filter-btn.active:hover {
+    background-color: #7191a8;
+    border-color: #7191a8;
 }
 
 @media (max-width: 768px) {
@@ -208,7 +215,7 @@
         margin-top: 10px;
     }
 
-    .filter-checkboxes {
+    .filter-buttons {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         gap: 8px;
     }
@@ -402,8 +409,9 @@ input:disabled+.debug-toggle-slider {
 .bugsquasher-filters {
     background: white;
     padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
 }
 
 .bugsquasher-filters h3 {

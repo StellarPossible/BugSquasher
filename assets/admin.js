@@ -259,8 +259,8 @@ jQuery(document).ready(function($) {
      */
     function filterErrors() {
         var checkedTypes = [];
-        $('.error-type-filter:checked').each(function() {
-            checkedTypes.push($(this).val());
+        $('.error-type-filter-btn.active').each(function() {
+            checkedTypes.push($(this).data('type'));
         });
 
         var visibleCount = 0;
@@ -278,11 +278,15 @@ jQuery(document).ready(function($) {
 
         // Update count of visible errors
         var totalErrors = $('.log-entry').length;
-        if (visibleCount === totalErrors) {
-            $('#error-count').text('Found ' + totalErrors + ' errors');
-        } else {
+        if (visibleCount === totalErrors && checkedTypes.length > 0) {
+             $('#error-count').text('Found ' + totalErrors + ' errors');
+        } else if (checkedTypes.length === 0) {
+            $('#error-count').text('Showing 0 of ' + totalErrors + ' errors. Select a filter to see results.');
+        }
+        else {
             $('#error-count').text('Showing ' + visibleCount + ' of ' + totalErrors + ' errors');
         }
+        updateSelectAllButtonState();
     }
 
     // Event handlers
@@ -297,8 +301,9 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Filter checkboxes
-    $('.error-type-filter').on('change', function() {
+    // Filter buttons
+    $('.error-type-filter-btn').on('click', function() {
+        $(this).toggleClass('active');
         filterErrors();
     });
 
@@ -410,39 +415,39 @@ jQuery(document).ready(function($) {
     // Fix for Select All button functionality
     $('#toggle-all-filters').on('click', function() {
         var $button = $(this);
-        var $checkboxes = $('.error-type-filter');
+        var $buttons = $('.error-type-filter-btn');
         var currentState = $button.data('state');
         
         if (currentState === 'select' || currentState === 'partial') {
             // Select all
-            $checkboxes.prop('checked', true);
+            $buttons.addClass('active');
             $button.data('state', 'deselect');
             $button.find('.btn-text').text('Deselect All');
         } else {
             // Deselect all
-            $checkboxes.prop('checked', false);
+            $buttons.removeClass('active');
             $button.data('state', 'select');
             $button.find('.btn-text').text('Select All');
         }
         
         // Trigger filter update
-        updateVisibleErrors();
+        filterErrors();
     });
     
     // Update button state when individual filters change
-    $('.error-type-filter').on('change', function() {
+    $(document).on('click', '.error-type-filter-btn', function() {
         updateSelectAllButtonState();
     });
     
     function updateSelectAllButtonState() {
         var $button = $('#toggle-all-filters');
-        var $checkboxes = $('.error-type-filter');
-        var checkedCount = $checkboxes.filter(':checked').length;
+        var $buttons = $('.error-type-filter-btn');
+        var checkedCount = $buttons.filter('.active').length;
         
         if (checkedCount === 0) {
             $button.data('state', 'select');
             $button.find('.btn-text').text('Select All');
-        } else if (checkedCount === $checkboxes.length) {
+        } else if (checkedCount === $buttons.length) {
             $button.data('state', 'deselect');
             $button.find('.btn-text').text('Deselect All');
         } else {
@@ -450,22 +455,4 @@ jQuery(document).ready(function($) {
             $button.find('.btn-text').text('Select All');
         }
     }
-    
-    // Update filter function
-    function updateVisibleErrors() {
-        var selectedTypes = [];
-        $('.error-type-filter:checked').each(function() {
-            selectedTypes.push($(this).val());
-        });
-
-        $('.log-entry').each(function() {
-            var entryType = $(this).data('type');
-            if (selectedTypes.includes(entryType)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    }
-    
 });
