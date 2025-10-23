@@ -155,6 +155,8 @@ jQuery(document).ready(function($) {
         }
 
         updateSelectAllButtonState();
+        // Update chart once the list is rendered and filtered
+        renderErrorOverviewChart();
     }
 
     /**
@@ -330,6 +332,115 @@ jQuery(document).ready(function($) {
             $('#error-count').text('Showing ' + visibleCount + ' of ' + totalErrors + ' errors');
         }
         updateSelectAllButtonState();
+        // Update chart based on current visible entries
+        renderErrorOverviewChart();
+    }
+
+    // Chart.js instance holder
+    let errorChart = null;
+
+    // Severity order for consistent label ordering
+    const TYPE_ORDER = ['fatal','parse','critical','firewall','error','warning','cron','notice','deprecated','debug','info'];
+
+    // Colors per type (aligned with CSS accents)
+    const TYPE_COLORS = {
+        fatal: '#d63638',
+        parse: '#d63638',
+        critical: '#d63638',
+        firewall: '#d63638',
+        error: '#dba617',
+        warning: '#f56e28',
+        cron: '#dba617',
+        notice: '#007cba',
+        deprecated: '#8c8f94',
+        debug: '#8e44ad',
+        info: '#72aee6',
+        default: '#80A1BA'
+    };
+
+    // Compute counts by type from currently visible entries
+    function getVisibleTypeCounts() {
+        const counts = {};
+        const $entries = $('.log-entry:visible');
+        if ($entries.length === 0) {
+            return counts;
+        }
+        $entries.each(function() {
+            const t = ($(this).attr('data-type') || 'error').toLowerCase();
+            counts[t] = (counts[t] || 0) + 1;
+        });
+        return counts;
+    }
+
+    // Create or update the bar chart
+    function renderErrorOverviewChart() {
+        if (typeof Chart === 'undefined') {
+            return; // Chart.js not loaded
+        }
+        const canvas = document.getElementById('errors-bar-chart');
+        if (!canvas) {
+            return;
+        }
+
+        const counts = getVisibleTypeCounts();
+
+        // Order labels by severity and drop zero counts
+        const labels = TYPE_ORDER.filter(t => counts[t] > 0);
+        const data = labels.map(t => counts[t]);
+        const colors = labels.map(t => TYPE_COLORS[t] || TYPE_COLORS.default);
+
+        const ctx = canvas.getContext('2d');
+
+        if (errorChart) {
+            errorChart.data.labels = labels;
+            errorChart.data.datasets[0].data = data;
+            errorChart.data.datasets[0].backgroundColor = colors;
+            errorChart.update();
+            return;
+        }
+
+        errorChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Errors',
+                        data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        // Keep bars proportional and not overly thick with few categories
+                        maxBarThickness: 28,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                // Fill the fixed-height container set in CSS
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.parsed.y} ${context.label}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#50575e' },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0, color: '#50575e' },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            }
+        });
     }
 
     // Event handlers

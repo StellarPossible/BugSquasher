@@ -129,11 +129,20 @@ class BugSquasher
             return;
         }
 
+        // Enqueue Chart.js (CDN) and make admin.js depend on it
+        wp_enqueue_script(
+            'chartjs',
+            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+            array(),
+            '4.4.0',
+            true
+        );
+
         // Only enqueue JavaScript - CSS is embedded directly in admin_page() to avoid MIME issues
         wp_enqueue_script(
             'bugsquasher-admin',
             BUGSQUASHER_PLUGIN_URL . 'assets/admin.js',
-            array('jquery'),
+            array('jquery', 'chartjs'),
             BUGSQUASHER_VERSION,
             true
         );
@@ -734,6 +743,48 @@ class BugSquasher
             .bugsquasher-toast-close:hover {
                 color: #000;
             }
+
+            /* Error Overview Chart Card */
+            .bugsquasher-chart-card {
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                border-radius: 6px;
+                margin-bottom: 20px;
+                padding: 15px;
+                box-shadow: 0 4px 8px rgba(145, 196, 195, 0.15);
+            }
+            .bugsquasher-chart-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 10px;
+            }
+            .bugsquasher-chart-header h3 {
+                margin: 0;
+                color: #80A1BA;
+                font-weight: 600;
+            }
+            .bugsquasher-chart-header small {
+                color: #666;
+            }
+
+            /* Fix chart height so it does not grow with error count */
+            .bugsquasher-chart-container {
+                position: relative;
+                width: 100%;
+                height: 220px;
+                max-height: 220px;
+            }
+            #errors-bar-chart {
+                width: 100% !important;
+                height: 100% !important;
+            }
+            @media (max-width: 782px) {
+                .bugsquasher-chart-container {
+                    height: 180px;
+                    max-height: 180px;
+                }
+            }
         </style>
 
         <div class="wrap">
@@ -755,6 +806,17 @@ class BugSquasher
             <div class="bugsquasher-toast-container" id="toast-container"></div>
 
             <div class="bugsquasher-container">
+                <!-- Error Overview chart card -->
+                <div class="bugsquasher-chart-card">
+                    <div class="bugsquasher-chart-header">
+                        <h3>Error Overview</h3>
+                        <small>Counts reflect current filters</small>
+                    </div>
+                    <div class="bugsquasher-chart-container">
+                        <canvas id="errors-bar-chart"></canvas>
+                    </div>
+                </div>
+
                 <div class="bugsquasher-controls">
                     <button id="load-errors" class="button button-primary">Load Recent Errors</button>
                     <select id="error-limit">
