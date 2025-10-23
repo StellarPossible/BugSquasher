@@ -815,18 +815,9 @@ class BugSquasher
                             <span class="btn-text">Select All</span>
                         </button>
                     </div>
-                    <div class="filter-buttons">
-                        <button class="error-type-filter-btn" data-type="fatal">Fatal Errors</button>
-                        <button class="error-type-filter-btn" data-type="parse">Parse Errors</button>
-                        <button class="error-type-filter-btn" data-type="critical">Critical</button>
-                        <button class="error-type-filter-btn" data-type="error">Errors</button>
-                        <button class="error-type-filter-btn" data-type="warning">Warnings</button>
-                        <button class="error-type-filter-btn" data-type="notice">Notices</button>
-                        <button class="error-type-filter-btn" data-type="deprecated">Deprecated</button>
-                        <button class="error-type-filter-btn" data-type="firewall">Firewall</button>
-                        <button class="error-type-filter-btn" data-type="cron">Cron</button>
-                        <button class="error-type-filter-btn" data-type="info">Info</button>
-                        <button class="error-type-filter-btn" data-type="debug">PCT Debug</button>
+                    <div class="filter-buttons" id="filter-buttons-container">
+                        <!-- Filter buttons will be dynamically inserted here -->
+                        <p>Load errors to see available filters.</p>
                     </div>
                 </div>
 
@@ -844,30 +835,6 @@ class BugSquasher
                 Presented by <a href="https://stellarpossible.com" target="_blank" style="vertical-align: middle; text-decoration: none;"><img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible" style="height: 20px; vertical-align: middle; margin-left: 5px;"></a>
             </div>
         </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Default filters to be active on load
-                const defaultActiveFilters = ['fatal', 'parse', 'critical', 'error', 'debug'];
-                
-                document.querySelectorAll('.error-type-filter-btn').forEach(button => {
-                    if (defaultActiveFilters.includes(button.dataset.type)) {
-                        button.classList.add('active');
-                    }
-                });
-
-                // Manually trigger a filter update to reflect the default state
-                if (typeof filterErrors === 'function') {
-                    filterErrors();
-                } else if (window.jQuery) {
-                    // Fallback for when the main script hasn't run yet
-                    jQuery(document).ready(function($) {
-                        if (typeof filterErrors === 'function') {
-                            filterErrors();
-                        }
-                    });
-                }
-            });
-        </script>
 <?php
     }
 
@@ -989,18 +956,15 @@ class BugSquasher
 
         // Check if we have cached results
         $cache_key = 'bugsquasher_errors_' . $limit . '_' . filemtime($log_file);
-        $cached_errors = get_transient($cache_key);
+        $cached_data = get_transient($cache_key);
 
-        if ($cached_errors !== false) {
+        if ($cached_data !== false && isset($cached_data['errors']) && isset($cached_data['error_types'])) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('BugSquasher: Using cached results');
             }
-            wp_send_json_success([
-                'errors' => $cached_errors,
-                'count' => count($cached_errors),
-                'file_size' => $this->format_file_size(filesize($log_file)),
-                'cached' => true
-            ]);
+            $cached_data['cached'] = true;
+            $cached_data['file_size'] = $this->format_file_size(filesize($log_file));
+            wp_send_json_success($cached_data);
         }
 
         $errors = $this->parse_debug_log($limit);
@@ -1009,11 +973,22 @@ class BugSquasher
             error_log('BugSquasher: Found ' . count($errors) . ' errors');
         }
 
+        // Get unique error types and sort them
+        $error_types = array_unique(array_column($errors, 'type'));
+        $sorted_error_types = $this->sort_error_types(array_values($error_types));
+
+        $data_to_cache = [
+            'errors' => $errors,
+            'error_types' => $sorted_error_types,
+            'count' => count($errors)
+        ];
+
         // Cache results for 5 minutes
-        set_transient($cache_key, $errors, 300);
+        set_transient($cache_key, $data_to_cache, 300);
 
         wp_send_json_success(array(
             'errors' => $errors,
+            'error_types' => $sorted_error_types,
             'count' => count($errors),
             'file_size' => $this->format_file_size(filesize($log_file)),
             'cached' => false
@@ -1088,6 +1063,34 @@ class BugSquasher
         }
 
         wp_send_json_success($status_html);
+    }
+
+    /**
+     * Sort error types by criticality
+     */
+    private function sort_error_types($types)
+    {
+        $order = [
+            'fatal' => 1,
+            'parse' => 2,
+            'critical' => 3,
+            'firewall' => 4,
+            'error' => 5,
+            'warning' => 6,
+            'cron' => 7,
+            'notice' => 8,
+            'deprecated' => 9,
+            'debug' => 10,
+            'info' => 11,
+        ];
+
+        usort($types, function ($a, $b) use ($order) {
+            $a_order = isset($order[$a]) ? $order[$a] : 99;
+            $b_order = isset($order[$b]) ? $order[$b] : 99;
+            return $a_order - $b_order;
+        });
+
+        return $types;
     }
 
     /**

@@ -1,5 +1,7 @@
 jQuery(document).ready(function($) {
-    
+    // Keep a copy of all errors for re-render/filter
+    let allErrors = [];
+
     // Load errors on page load
     loadErrors();
 
@@ -9,10 +11,10 @@ jQuery(document).ready(function($) {
     function showToast(message, type = 'success', duration = 4000) {
         // Remove any existing toasts
         $('.bugsquasher-toast').remove();
-        
-        // Create toast element
+
+        // Create toast element (align classes with CSS: .bugsquasher-toast.show and .bugsquasher-toast.success|error|info)
         const toast = $(`
-            <div class="bugsquasher-toast bugsquasher-toast-${type}">
+            <div class="bugsquasher-toast ${type}">
                 <div class="bugsquasher-toast-content">
                     <span class="bugsquasher-toast-icon"></span>
                     <span class="bugsquasher-toast-message">${message}</span>
@@ -20,24 +22,24 @@ jQuery(document).ready(function($) {
                 </div>
             </div>
         `);
-        
+
         // Add to body
         $('body').append(toast);
-        
+
         // Trigger animation
-        setTimeout(() => toast.addClass('bugsquasher-toast-show'), 100);
-        
+        setTimeout(() => toast.addClass('show'), 100);
+
         // Auto-dismiss
         const timeoutId = setTimeout(() => {
             hideToast(toast);
         }, duration);
-        
+
         // Manual dismiss
         toast.find('.bugsquasher-toast-close').on('click', () => {
             clearTimeout(timeoutId);
             hideToast(toast);
         });
-        
+
         return toast;
     }
 
@@ -45,7 +47,7 @@ jQuery(document).ready(function($) {
      * Hide and remove toast
      */
     function hideToast(toast) {
-        toast.removeClass('bugsquasher-toast-show');
+        toast.removeClass('show');
         setTimeout(() => toast.remove(), 300);
     }
 
@@ -70,49 +72,89 @@ jQuery(document).ready(function($) {
             .replace(/'/g, "&#039;");
     }
 
-    /**
-     * Display errors in the log container
-     */
-    function displayErrors(errors) {
-        console.log('BugSquasher: Displaying', errors.length, 'errors');
-        
-        var $container = $('#log-content');
-        
-        if ($container.length === 0) {
-            console.error('BugSquasher: #log-content element not found!');
+    // Render errors into the log container
+    function renderErrors(errors) {
+        const logContent = $('#log-content');
+        if (!errors || errors.length === 0) {
+            logContent.html('<div class="no-errors"><span class="dashicons dashicons-yes-alt"></span><p>No errors found in the debug log. Great job!</p></div>').show();
+            updateErrorCount(0);
             return;
         }
-        
-        if (errors.length === 0) {
-            console.log('BugSquasher: No errors to display');
-            $container.html(
-                '<div class="no-errors">' +
-                '<div class="dashicons dashicons-yes-alt"></div>' +
-                '<h3>No errors found!</h3>' +
-                '<p>Your debug log is clean of fatal errors, parse errors, and critical issues.</p>' +
-                '</div>'
-            );
-            $container.show();
-            return;
-        }
-        
-        var html = '';
-        $.each(errors, function(index, error) {
-            console.log('BugSquasher: Processing error', index, ':', error);
-            html += '<div class="log-entry ' + error.type + '" data-type="' + error.type + '">';
-            html += '<div class="log-entry-header">';
-            html += '<span class="log-entry-type ' + error.type + '">' + error.type.toUpperCase() + '</span>';
-            if (error.timestamp) {
-                html += '<span class="log-entry-timestamp">' + escapeHtml(error.timestamp) + '</span>';
-            }
-            html += '</div>';
-            html += '<div class="log-entry-message">' + escapeHtml(error.message) + '</div>';
-            html += '</div>';
-        });
 
-        $container.html(html);
-        $container.show();
-        console.log('BugSquasher: Errors displayed successfully');
+        const html = errors.map(err => {
+            const type = err.type || 'error';
+            const ts = err.timestamp ? escapeHtml(err.timestamp) : '';
+            const safeMsg = escapeHtml(err.message || '');
+            return `
+                <div class="log-entry ${type}" data-type="${type}">
+                    <div class="log-entry-header">
+                        <span class="log-entry-timestamp">${ts}</span>
+                        <span class="log-entry-type ${type}">${type.toUpperCase()}</span>
+                    </div>
+                    <div class="log-entry-message">${safeMsg}</div>
+                </div>
+            `;
+        }).join('');
+
+        logContent.html(html).show();
+        updateErrorCount(errors.length);
+    }
+
+    /**
+     * Display errors in the log container + build filters
+     */
+    function displayErrors(errors, errorTypes) {
+        const logContent = $('#log-content');
+        const errorCount = $('#error-count');
+        const filterButtonsContainer = $('#filter-buttons-container');
+        const toggleAllButton = $('#toggle-all-filters');
+
+        // Store all loaded errors
+        allErrors = Array.isArray(errors) ? errors : [];
+
+        // Render the error list
+        renderErrors(allErrors);
+
+        // Dynamically create filter buttons
+        filterButtonsContainer.empty();
+        if (errorTypes && errorTypes.length > 0) {
+            errorTypes.forEach(type => {
+                const label = (type || '').toString();
+                if (!label) return;
+                const button = $('<button></button>')
+                    .addClass('error-type-filter-btn')
+                    .attr('data-type', label)
+                    .text(label.charAt(0).toUpperCase() + label.slice(1));
+                filterButtonsContainer.append(button);
+            });
+
+            // Set default active filters (only if those types exist)
+            const defaultActiveFilters = ['fatal', 'parse', 'critical', 'error', 'debug'];
+            $('.error-type-filter-btn').each(function() {
+                const t = $(this).data('type');
+                if (defaultActiveFilters.includes(t)) {
+                    $(this).addClass('active');
+                }
+            });
+
+            toggleAllButton.show();
+        } else if (allErrors.length > 0) {
+            filterButtonsContainer.html('<p>No specific error types found to filter by.</p>');
+            toggleAllButton.hide();
+        } else {
+            filterButtonsContainer.html('<p>Load errors to see available filters.</p>');
+            toggleAllButton.hide();
+        }
+
+        if (allErrors.length === 0) {
+            logContent.html('<div class="no-errors"><span class="dashicons dashicons-yes-alt"></span><p>No errors found in the debug log. Great job!</p></div>').show();
+            errorCount.text('No errors found');
+        } else {
+            // Apply initial filtering based on default active buttons
+            filterErrors();
+        }
+
+        updateSelectAllButtonState();
     }
 
     /**
@@ -147,7 +189,7 @@ jQuery(document).ready(function($) {
                     if (response.data.cached) {
                         console.log('BugSquasher: Results loaded from cache');
                     }
-                    displayErrors(response.data.errors);
+                    displayErrors(response.data.errors, response.data.error_types);
                     updateErrorCount(response.data.count);
                     
                     // Apply initial filtering based on checkbox states
@@ -255,7 +297,7 @@ jQuery(document).ready(function($) {
     }
 
     /**
-     * Filter errors by type
+     * Filter errors by type (uses .log-entry generated by renderErrors)
      */
     function filterErrors() {
         var checkedTypes = [];
@@ -264,10 +306,12 @@ jQuery(document).ready(function($) {
         });
 
         var visibleCount = 0;
-        $('.log-entry').each(function() {
+        var $entries = $('.log-entry');
+
+        $entries.each(function() {
             var $entry = $(this);
             var entryType = $entry.attr('data-type');
-            
+
             if (checkedTypes.length === 0 || checkedTypes.indexOf(entryType) !== -1) {
                 $entry.show();
                 visibleCount++;
@@ -277,13 +321,12 @@ jQuery(document).ready(function($) {
         });
 
         // Update count of visible errors
-        var totalErrors = $('.log-entry').length;
+        var totalErrors = $entries.length;
         if (visibleCount === totalErrors && checkedTypes.length > 0) {
-             $('#error-count').text('Found ' + totalErrors + ' errors');
+            $('#error-count').text('Found ' + totalErrors + ' errors');
         } else if (checkedTypes.length === 0) {
             $('#error-count').text('Showing 0 of ' + totalErrors + ' errors. Select a filter to see results.');
-        }
-        else {
+        } else {
             $('#error-count').text('Showing ' + visibleCount + ' of ' + totalErrors + ' errors');
         }
         updateSelectAllButtonState();
@@ -301,123 +344,19 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Filter buttons
-    $('.error-type-filter-btn').on('click', function() {
+    // Delegated handler: toggle, filter, and update state
+    $(document).on('click', '.error-type-filter-btn', function() {
         $(this).toggleClass('active');
         filterErrors();
+        updateSelectAllButtonState();
     });
 
-    // Debug toggle handlers
-    $('#wp-debug-toggle, #wp-debug-log-toggle, #wp-debug-display-toggle').on('change', function(e) {
-        const $toggle = $(this);
-        const setting = $toggle.attr('id').replace('-toggle', '').replace(/-/g, '_').toUpperCase();
-        const value = $toggle.is(':checked');
-        
-        // Check if the toggle is disabled (permissions issue)
-        if ($toggle.prop('disabled')) {
-            e.preventDefault();
-            $toggle.prop('checked', !value); // Revert the change
-            showToast('wp-config.php permissions prevent debug setting modification.', 'error');
-            return false;
-        }
-        
-        // Check for development environment confirmation if required
-        const $devConfirm = $('#dev-environment-confirm');
-        if ($devConfirm.length && !$devConfirm.is(':checked')) {
-            e.preventDefault();
-            $toggle.prop('checked', !value); // Revert the change
-            showToast('Please confirm this is a development environment before modifying debug settings.', 'error');
-            // Highlight the confirmation checkbox
-            $devConfirm.closest('div').css('border', '2px solid #d63638').css('border-radius', '4px');
-            setTimeout(() => {
-                $devConfirm.closest('div').css('border', '').css('border-radius', '');
-            }, 3000);
-            return false;
-        }
-        
-        // Check if this is WP_DEBUG_DISPLAY and WP_DEBUG is not enabled
-        if (setting === 'WP_DEBUG_DISPLAY' && !$('#wp-debug-toggle').is(':checked')) {
-            e.preventDefault();
-            $toggle.prop('checked', false);
-            showToast('WP_DEBUG must be enabled before you can enable WP_DEBUG_DISPLAY', 'error');
-            return false;
-        }
-        
-        // Prevent multiple rapid clicks
-        if ($toggle.data('processing')) {
-            e.preventDefault();
-            return false;
-        }
-        
-        // Mark as processing
-        $toggle.data('processing', true);
-        $toggle.prop('disabled', true);
-        
-        console.log('Toggling', setting, 'to', value);
-        
-        $.ajax({
-            url: bugsquasher_ajax.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'bugsquasher_toggle_debug',
-                nonce: bugsquasher_ajax.nonce,
-                setting: setting,
-                value: value
-            },
-            success: function(response) {
-                console.log('AJAX Response:', response);
-                if (response.success) {
-                    showToast(response.data.message, 'success');
-                    
-                    // Don't reload immediately, just update the UI state
-                    // The toggle should stay in its new position
-                    
-                    // If we just enabled/disabled WP_DEBUG, handle WP_DEBUG_DISPLAY accordingly
-                    if (setting === 'WP_DEBUG') {
-                        const $displayToggle = $('#wp-debug-display-toggle');
-                        const $displayItem = $displayToggle.closest('.debug-toggle-item');
-                        
-                        if (value) {
-                            // WP_DEBUG enabled - enable WP_DEBUG_DISPLAY toggle
-                            $displayToggle.prop('disabled', false);
-                            $displayItem.removeClass('debug-item-disabled');
-                        } else {
-                            // WP_DEBUG disabled - disable and uncheck WP_DEBUG_DISPLAY
-                            $displayToggle.prop('disabled', true).prop('checked', false);
-                            $displayItem.addClass('debug-item-disabled');
-                        }
-                    }
-                    
-                    // Refresh the debug status info after a short delay
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    showToast('Error: ' + (response.data || 'Unknown error'), 'error');
-                    // Revert the toggle state on error
-                    $toggle.prop('checked', !value);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', xhr.responseText);
-                showToast('AJAX Error: ' + error, 'error');
-                // Revert the toggle state on error
-                $toggle.prop('checked', !value);
-            },
-            complete: function() {
-                // Re-enable the toggle and clear processing flag
-                $toggle.prop('disabled', false);
-                $toggle.data('processing', false);
-            }
-        });
-    });
-
-    // Fix for Select All button functionality
+    // Fix for Select All button functionality (unchanged logic, now works with dynamic buttons)
     $('#toggle-all-filters').on('click', function() {
         var $button = $(this);
         var $buttons = $('.error-type-filter-btn');
         var currentState = $button.data('state');
-        
+
         if (currentState === 'select' || currentState === 'partial') {
             // Select all
             $buttons.addClass('active');
@@ -429,25 +368,27 @@ jQuery(document).ready(function($) {
             $button.data('state', 'select');
             $button.find('.btn-text').text('Select All');
         }
-        
-        // Trigger filter update
+
         filterErrors();
     });
-    
-    // Update button state when individual filters change
-    $(document).on('click', '.error-type-filter-btn', function() {
-        updateSelectAllButtonState();
-    });
-    
+
     function updateSelectAllButtonState() {
         var $button = $('#toggle-all-filters');
         var $buttons = $('.error-type-filter-btn');
+        var total = $buttons.length;
         var checkedCount = $buttons.filter('.active').length;
-        
+
+        if (total === 0) {
+            $button.hide().data('state', 'select').find('.btn-text').text('Select All');
+            return;
+        } else {
+            $button.show();
+        }
+
         if (checkedCount === 0) {
             $button.data('state', 'select');
             $button.find('.btn-text').text('Select All');
-        } else if (checkedCount === $buttons.length) {
+        } else if (checkedCount === total) {
             $button.data('state', 'deselect');
             $button.find('.btn-text').text('Deselect All');
         } else {
