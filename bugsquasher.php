@@ -156,9 +156,12 @@ class BugSquasher
         );
 
         // Localize script
+        $current_settings = get_option('bugsquasher_settings', BugSquasher_Config::get_default_settings());
         wp_localize_script('bugsquasher-admin', 'bugsquasher_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('bugsquasher_nonce')
+            'nonce' => wp_create_nonce('bugsquasher_nonce'),
+            // Pass export format to the client (detailed | compact | markdown_table | markdown_list)
+            'export_format' => isset($current_settings['export_format']) ? $current_settings['export_format'] : 'detailed',
         ));
     }
 
@@ -187,10 +190,8 @@ class BugSquasher
 ?>
         <div class="wrap">
             <h1>BugSquasher Settings</h1>
-
             <form method="post" action="">
                 <?php wp_nonce_field('bugsquasher_settings', 'bugsquasher_settings_nonce'); ?>
-
                 <table class="form-table">
                     <tr>
                         <th scope="row">Timezone</th>
@@ -278,6 +279,8 @@ class BugSquasher
                             <select name="export_format">
                                 <option value="detailed" <?php selected($current_settings['export_format'], 'detailed'); ?>>Detailed (with timestamps)</option>
                                 <option value="compact" <?php selected($current_settings['export_format'], 'compact'); ?>>Compact (messages only)</option>
+                                <option value="markdown_table" <?php selected($current_settings['export_format'], 'markdown_table'); ?>>Markdown table</option>
+                                <option value="markdown_list" <?php selected($current_settings['export_format'], 'markdown_list'); ?>>Markdown list</option>
                             </select>
                             <p class="description">Choose the format for exported error logs.</p>
                         </td>
@@ -689,34 +692,6 @@ class BugSquasher
     }
 
     /**
-     * Sort error types by criticality
-     */
-    private function sort_error_types($types)
-    {
-        $order = [
-            'fatal' => 1,
-            'parse' => 2,
-            'critical' => 3,
-            'firewall' => 4,
-            'error' => 5,
-            'warning' => 6,
-            'cron' => 7,
-            'notice' => 8,
-            'deprecated' => 9,
-            'debug' => 10,
-            'info' => 11,
-        ];
-
-        usort($types, function ($a, $b) use ($order) {
-            $a_order = isset($order[$a]) ? $order[$a] : 99;
-            $b_order = isset($order[$b]) ? $order[$b] : 99;
-            return $a_order - $b_order;
-        });
-
-        return $types;
-    }
-
-    /**
      * Parse debug log and return formatted errors (efficient version)
      */
     private function parse_debug_log($max_lines = 100)
@@ -861,40 +836,10 @@ class BugSquasher
     }
 
     /**
-     * Enhanced process_log_entry with timestamp formatting
+     * Ensure every entry is processed; unknowns go to "misc"
      */
     private function process_log_entry($entry)
     {
-        // Also check for PCT_CERT_DEBUG or other custom debug patterns
-        if (!preg_match('/(Fatal|Parse|Warning|Notice|Deprecated|CRITICAL|AIOS|Cron|\[PCT_)/i', $entry)) {
-            return null;
-        }
-
-        // Check if entry contains error patterns
-        $error_patterns = [
-            '/Fatal error|PHP Fatal error/',
-            '/Parse error|PHP Parse error/',
-            '/Warning|PHP Warning/',
-            '/Notice|PHP Notice/',
-            '/Deprecated|PHP Deprecated/',
-            '/CRITICAL/',
-            '/AIOS firewall error/',
-            '/Cron .* error/',
-            '/\[PCT_.*_DEBUG\]/' // Added pattern for PCT debug logs
-        ];
-
-        $is_error = false;
-        foreach ($error_patterns as $pattern) {
-            if (preg_match($pattern, $entry)) {
-                $is_error = true;
-                break;
-            }
-        }
-
-        if (!$is_error) {
-            return null;
-        }
-
         // Extract and format timestamp
         $timestamp = '';
         if (preg_match('/^\[([^\]]+)\]/', $entry, $matches)) {
@@ -902,41 +847,77 @@ class BugSquasher
             $timestamp = $this->format_timestamp($raw_timestamp);
         }
 
+        // Strip the leading [timestamp] from the message so duplicates can be grouped
+        $clean_message = preg_replace('/^\[[^\]]+\]\s*/', '', trim($entry));
+
         return [
             'timestamp' => $timestamp,
             'type' => $this->get_error_type($entry),
-            'message' => trim($entry)
+            'message' => $clean_message,
         ];
     }
 
     /**
-     * Get error type from log line
+     * Get error type from log line, fallback to misc
      */
     private function get_error_type($line)
     {
-        if (preg_match('/Fatal error|PHP Fatal error/', $line)) {
+        if (preg_match('/Fatal error|PHP Fatal error/i', $line)) {
             return 'fatal';
-        } elseif (preg_match('/Parse error|PHP Parse error/', $line)) {
+        } elseif (preg_match('/Parse error|PHP Parse error/i', $line)) {
             return 'parse';
-        } elseif (preg_match('/Warning|PHP Warning/', $line)) {
-            return 'warning';
-        } elseif (preg_match('/Notice|PHP Notice/', $line)) {
-            return 'notice';
-        } elseif (preg_match('/Deprecated|PHP Deprecated/', $line)) {
-            return 'deprecated';
-        } elseif (preg_match('/CRITICAL/', $line)) {
-            return 'critical';
-        } elseif (preg_match('/AIOS firewall error/', $line)) {
+        } elseif (preg_match('/AIOS .*firewall.*error/i', $line)) {
             return 'firewall';
-        } elseif (preg_match('/Cron .* error/', $line)) {
+        } elseif (preg_match('/CRITICAL/i', $line)) {
+            return 'critical';
+        } elseif (preg_match('/Cron .* error/i', $line)) {
             return 'cron';
+        } elseif (preg_match('/PHP Warning|Warning:/i', $line)) {
+            return 'warning';
+        } elseif (preg_match('/PHP Notice|Notice:/i', $line)) {
+            return 'notice';
+        } elseif (preg_match('/PHP Deprecated|Deprecated:/i', $line)) {
+            return 'deprecated';
+        } elseif (preg_match('/Exception|Throwable|Error:/i', $line)) {
+            // Generic PHP error/exception category
+            return 'error';
         } elseif (preg_match('/\[PCT_.*_DEBUG\]/', $line)) {
             return 'debug';
         } elseif (preg_match('/\[BugSquasher\]/', $line)) {
             return 'info';
-        } else {
-            return 'error';
         }
+
+        // Unknown classification -> Misc
+        return 'misc';
+    }
+
+    /**
+     * Sort error types by criticality
+     */
+    private function sort_error_types($types)
+    {
+        $order = [
+            'fatal' => 1,
+            'parse' => 2,
+            'critical' => 3,
+            'firewall' => 4,
+            'error' => 5,
+            'warning' => 6,
+            'cron' => 7,
+            'notice' => 8,
+            'deprecated' => 9,
+            'debug' => 10,
+            'info' => 11,
+            'misc' => 12,
+        ];
+
+        usort($types, function ($a, $b) use ($order) {
+            $a_order = isset($order[$a]) ? $order[$a] : 99;
+            $b_order = isset($order[$b]) ? $order[$b] : 99;
+            return $a_order - $b_order;
+        });
+
+        return $types;
     }
 }
 

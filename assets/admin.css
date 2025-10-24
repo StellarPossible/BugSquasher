@@ -521,6 +521,12 @@ input:disabled+.debug-toggle-slider {
     background: #f6f7f7;
 }
 
+/* Misc fallback */
+.log-entry.misc {
+    border-left-color: #8c8f94;
+    background: #f6f7f7;
+}
+
 .log-entry.firewall {
     border-left-color: #d63638;
     background: #fef2f2;
@@ -550,6 +556,16 @@ input:disabled+.debug-toggle-slider {
     color: #666;
 }
 
+/* Duplicate count badge */
+.log-entry-dup-count {
+    background: #8c8f94;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    margin-left: 6px;
+}
+
 .log-entry-type {
     background: #666;
     color: white;
@@ -575,6 +591,11 @@ input:disabled+.debug-toggle-slider {
 }
 
 .log-entry-type.deprecated {
+    background: #8c8f94;
+}
+
+/* Misc fallback */
+.log-entry-type.misc {
     background: #8c8f94;
 }
 
