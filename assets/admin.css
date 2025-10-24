@@ -39,12 +39,18 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 15px;
     color: white;
     border-radius: 5px;
     margin-bottom: 5px;
     box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 15px;
+    margin-bottom: 15px;
+    height: 10rem; /* fixed header height */
 }
 
 .bugsquasher-logo-container {
@@ -63,6 +69,9 @@
     max-width: 10rem;
     border-radius: 5px;
     object-fit: cover;
+    height: 100%;     /* fill header height */
+    max-height: 100%;
+    width: auto;      /* maintain aspect ratio */
 }
 
 .bugsquasher-subtitle {
@@ -742,65 +751,96 @@ input:disabled+.debug-toggle-slider {
     margin-right: 5px;
 }
 
-/* Responsive layout improvements */
-@media (max-width: 992px) {
-    .bugsquasher-header {
-        flex-direction: column;
-    }
-
-    .bugsquasher-security-status .status-row {
-        margin-bottom: 5px;
-    }
-
-    .bugsquasher-security-status .status-label {
-        min-width: 100px;
-    }
+/* Header: fixed height and logo sizing */
+.bugsquasher-header {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  padding: 15px;
+  margin-bottom: 15px;
+  height: 10rem; /* fixed header height */
 }
 
+.bugsquasher-title {
+  /* optional: keep default WP heading sizing or customize */
+  margin: 0 0 5px 0;
+}
+
+/* Chart card + header */
+.bugsquasher-chart-card {
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(145, 196, 195, 0.15);
+}
+
+.bugsquasher-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.bugsquasher-chart-header h3 {
+  margin: 0;
+  color: #80A1BA;
+  font-weight: 600;
+}
+
+.bugsquasher-chart-header small {
+  color: #666;
+}
+
+/* Fixed-height chart area */
+.bugsquasher-chart-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  max-height: 220px;
+}
+#errors-bar-chart {
+  width: 100% !important;
+  height: 100% !important;
+}
+@media (max-width: 782px) {
+  .bugsquasher-chart-container {
+    height: 180px;
+    max-height: 180px;
+  }
+}
+
+/* Footer moved from inline styles */
+.bugsquasher-footer {
+  text-align: center;
+  margin-top: 20px;
+  color: #777;
+}
+.bugsquasher-footer a {
+  vertical-align: middle;
+  text-decoration: none;
+}
+.bugsquasher-footer img {
+  height: 20px;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
+/* Default hidden states previously inline */
+#log-content,
+#loading,
+#missing-types-notification {
+  display: none;
+}
+
+/* Ensure existing layout keeps working on small screens */
 @media (max-width: 768px) {
-    .bugsquasher-logo-container {
-        flex-direction: column;
-        text-align: center;
-        gap: 15px;
-    }
-
-    .bugsquasher-security-status {
-        font-size: 12px;
-    }
-
-    .bugsquasher-security-status .status-row {
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .bugsquasher-security-status .status-label {
-        font-weight: 600;
-        margin-bottom: 0;
-    }
-
-    .bugsquasher-security-status .status-value {
-        padding-left: 8px;
-    }
-}
-
-/* Debug warning styles */
-.bugsquasher-debug-warning {
-    background-color: #FFF3CD; 
-    border: 2px solid #FFD700; 
-    border-radius: 6px; 
-    padding: 15px; 
-    margin-bottom: 20px; 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-    color: #7d6608; 
-    font-size: 14px; 
-    position: relative;
-}
-
-.bugsquasher-production-warning,
-.bugsquasher-development-warning {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 15px;
+  .bugsquasher-header {
+    height: auto;       /* allow natural height on narrow screens */
+    min-height: 10rem;  /* still reserve space for the logo */
+  }
+  .bugsquasher-logo {
+    max-height: 10rem;
+  }
 }

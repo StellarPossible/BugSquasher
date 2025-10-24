@@ -138,6 +138,14 @@ class BugSquasher
             true
         );
 
+        // Enqueue our stylesheet
+        wp_enqueue_style(
+            'bugsquasher-admin',
+            BUGSQUASHER_PLUGIN_URL . 'assets/admin.css',
+            array(),
+            BUGSQUASHER_VERSION
+        );
+
         // Only enqueue JavaScript - CSS is embedded directly in admin_page() to avoid MIME issues
         wp_enqueue_script(
             'bugsquasher-admin',
@@ -324,15 +332,7 @@ class BugSquasher
         if ($hook !== 'tools_page_bugsquasher') {
             return;
         }
-
-        // Remove any potential CSS files that WordPress might try to auto-load
-        global $wp_styles;
-        if (isset($wp_styles->registered['bugsquasher-admin'])) {
-            wp_deregister_style('bugsquasher-admin');
-        }
-        if (isset($wp_styles->registered['bugsquasher'])) {
-            wp_deregister_style('bugsquasher');
-        }
+        // No-op: allow our stylesheet to load
     }
 
     /**
@@ -341,462 +341,20 @@ class BugSquasher
     public function admin_page()
     {
     ?>
-        <style type="text/css">
-            /* BugSquasher Admin Styles - Embedded to avoid MIME issues */
-            .bugsquasher-container {
-                max-width: 1200px;
-                margin: 20px 0;
-            }
-
-            .bugsquasher-controls {
-                background: #fff;
-                padding: 15px;
-                border: 1px solid #ccd0d4;
-                margin-bottom: 20px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                flex-wrap: wrap;
-            }
-
-            .bugsquasher-info {
-                margin-left: auto;
-            }
-
-            .status-enabled {
-                color: #00a32a;
-                font-weight: bold;
-            }
-
-            .status-disabled,
-            .status-not-found {
-                color: #d63638;
-                font-weight: bold;
-            }
-
-            .bugsquasher-filters {
-                background: white;
-                padding: 15px;
-                border-radius: 6px;
-                margin-bottom: 20px;
-                box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
-            }
-
-            .filter-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-
-            .filter-title-container {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .bugsquasher-filters h3 {
-                margin: 0;
-                color: #80A1BA;
-                font-weight: 600;
-            }
-
-            /* Select All/Deselect All Button Styles */
-            .select-all-btn {
-                position: relative;
-                font-weight: 500;
-                padding: 5px 12px !important;
-                border-radius: 5px !important;
-                border: 2px solid !important;
-                transition: all 0.3s ease !important;
-                cursor: pointer;
-                min-width: 100px;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-
-            /* Select All State (when some/none are selected) */
-            .select-all-btn[data-state="select"] {
-                background: #91C4C3 !important;
-                border-color: #91C4C3 !important;
-                color: white !important;
-            }
-
-            .select-all-btn[data-state="select"]:hover {
-                background: #80A1BA !important;
-                border-color: #80A1BA !important;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 8px rgba(128, 161, 186, 0.3);
-            }
-
-            /* Deselect All State (when all are selected) */
-            .select-all-btn[data-state="deselect"] {
-                background: #d63638 !important;
-                border-color: #d63638 !important;
-                color: white !important;
-            }
-
-            .select-all-btn[data-state="deselect"]:hover {
-                background: #b32d2e !important;
-                border-color: #b32d2e !important;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 8px rgba(214, 54, 56, 0.3);
-            }
-
-            /* Partial State (mixed selection) */
-            .select-all-btn[data-state="partial"] {
-                background: #B4DEBD !important;
-                border-color: #B4DEBD !important;
-                color: #2c3e50 !important;
-            }
-
-            .select-all-btn[data-state="partial"]:hover {
-                background: #91C4C3 !important;
-                border-color: #91C4C3 !important;
-                color: white !important;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
-            }
-
-            /* Button text animation */
-            .select-all-btn .btn-text {
-                display: inline-block;
-                transition: all 0.2s ease;
-            }
-
-            .filter-buttons {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 10px;
-            }
-
-            .error-type-filter-btn {
-                padding: 8px 12px;
-                border: 1px solid #ccd0d4;
-                background-color: #f6f7f7;
-                color: #50575e;
-                border-radius: 4px;
-                cursor: pointer;
-                text-align: center;
-                transition: all 0.2s ease;
-                font-weight: 500;
-            }
-
-            .error-type-filter-btn:hover {
-                background-color: #f0f0f1;
-                border-color: #b4b9be;
-            }
-
-            .error-type-filter-btn.active {
-                background-color: #80A1BA;
-                color: white;
-                border-color: #80A1BA;
-                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-            }
-
-            .error-type-filter-btn.active:hover {
-                background-color: #7191a8;
-                border-color: #7191a8;
-            }
-
-            @media (max-width: 768px) {
-                .bugsquasher-logo-container {
-                    flex-direction: column;
-                    text-align: center;
-                    gap: 15px;
-                }
-
-                .filter-header {
-                    flex-direction: column;
-                    align-items: stretch;
-                    text-align: center;
-                }
-
-                .select-all-btn {
-                    width: 100%;
-                    margin-top: 10px;
-                }
-
-                .filter-buttons {
-                    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                    gap: 8px;
-                }
-            }
-
-            .bugsquasher-log-container {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                min-height: 400px;
-            }
-
-            #error-count {
-                padding: 10px 15px;
-                background: #f6f7f7;
-                border-bottom: 1px solid #ccd0d4;
-                font-weight: bold;
-            }
-
-            #log-content {
-                padding: 15px;
-                font-family: monospace;
-                font-size: 13px;
-                line-height: 1.5;
-                max-height: 600px;
-                overflow-y: auto;
-            }
-
-            .log-entry {
-                margin-bottom: 15px;
-                padding: 10px;
-                border-left: 4px solid #ccc;
-                background: #f9f9f9;
-            }
-
-            .log-entry.fatal {
-                border-left-color: #d63638;
-                background: #fef2f2;
-            }
-
-            .log-entry.parse {
-                border-left-color: #d63638;
-                background: #fef2f2;
-            }
-
-            .log-entry.critical {
-                border-left-color: #d63638;
-                background: #fef2f2;
-            }
-
-            .log-entry.warning {
-                border-left-color: #f56e28;
-                background: #fef7f0;
-            }
-
-            .log-entry.notice {
-                border-left-color: #007cba;
-                background: #f0f8ff;
-            }
-
-            .log-entry.deprecated {
-                border-left-color: #8c8f94;
-                background: #f6f7f7;
-            }
-
-            .log-entry.firewall {
-                border-left-color: #d63638;
-                background: #fef2f2;
-            }
-
-            .log-entry.cron {
-                border-left-color: #dba617;
-                background: #fffbf0;
-            }
-
-            .log-entry.info {
-                border-left-color: #72aee6;
-                background: #f0f6fc;
-            }
-
-            .log-entry.error {
-                border-left-color: #dba617;
-                background: #fffbf0;
-            }
-
-            .log-entry.debug {
-                border-left-color: #8e44ad;
-                background: #f5f0fa;
-            }
-
-            .log-entry-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 5px;
-                font-size: 11px;
-                color: #666;
-            }
-
-            .log-entry-type {
-                background: #666;
-                color: white;
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-size: 10px;
-                text-transform: uppercase;
-            }
-
-            .log-entry-type.fatal,
-            .log-entry-type.parse,
-            .log-entry-type.critical,
-            .log-entry-type.firewall {
-                background: #d63638;
-            }
-
-            .log-entry-type.warning {
-                background: #f56e28;
-            }
-
-            .log-entry-type.notice {
-                background: #007cba;
-            }
-
-            .log-entry-type.deprecated {
-                background: #8c8f94;
-            }
-
-            .log-entry-type.info {
-                background: #72aee6;
-            }
-
-            .log-entry-type.cron,
-            .log-entry-type.error {
-                background: #dba617;
-            }
-
-            .log-entry-type.debug {
-                background: #8e44ad;
-            }
-
-            .log-entry-message {
-                word-break: break-all;
-                white-space: pre-wrap;
-            }
-
-            .no-errors {
-                text-align: center;
-                padding: 40px;
-                color: #666;
-            }
-
-            .no-errors .dashicons {
-                font-size: 48px;
-                margin-bottom: 10px;
-                color: #00a32a;
-            }
-
-            #loading {
-                text-align: center;
-                padding: 40px;
-            }
-
-            /* Toast Notification Styles */
-            .bugsquasher-toast-container {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                pointer-events: none;
-            }
-
-            .bugsquasher-toast {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-                padding: 12px 16px;
-                margin-bottom: 8px;
-                min-width: 280px;
-                max-width: 400px;
-                opacity: 0;
-                transform: translateX(100%);
-                transition: all 0.3s ease;
-                pointer-events: auto;
-                position: relative;
-            }
-
-            .bugsquasher-toast.show {
-                opacity: 1;
-                transform: translateX(0);
-            }
-
-            .bugsquasher-toast.success {
-                border-left: 4px solid #00a32a;
-            }
-
-            .bugsquasher-toast.error {
-                border-left: 4px solid #d63638;
-            }
-
-            .bugsquasher-toast.info {
-                border-left: 4px solid #007cba;
-            }
-
-            .bugsquasher-toast-message {
-                font-size: 14px;
-                line-height: 1.4;
-                margin: 0;
-            }
-
-            .bugsquasher-toast-close {
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: none;
-                border: none;
-                font-size: 16px;
-                color: #666;
-                cursor: pointer;
-                padding: 0;
-                line-height: 1;
-            }
-
-            .bugsquasher-toast-close:hover {
-                color: #000;
-            }
-
-            /* Error Overview Chart Card */
-            .bugsquasher-chart-card {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 6px;
-                margin-bottom: 20px;
-                padding: 15px;
-                box-shadow: 0 4px 8px rgba(145, 196, 195, 0.15);
-            }
-            .bugsquasher-chart-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: baseline;
-                margin-bottom: 10px;
-            }
-            .bugsquasher-chart-header h3 {
-                margin: 0;
-                color: #80A1BA;
-                font-weight: 600;
-            }
-            .bugsquasher-chart-header small {
-                color: #666;
-            }
-
-            /* Fix chart height so it does not grow with error count */
-            .bugsquasher-chart-container {
-                position: relative;
-                width: 100%;
-                height: 220px;
-                max-height: 220px;
-            }
-            #errors-bar-chart {
-                width: 100% !important;
-                height: 100% !important;
-            }
-            @media (max-width: 782px) {
-                .bugsquasher-chart-container {
-                    height: 180px;
-                    max-height: 180px;
-                }
-            }
-        </style>
-
         <div class="wrap">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #fff; padding: 15px; border: 1px solid #ccd0d4;">
-                <div style="display: flex; align-items: center;">
-                    <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/BugSquasherLogo.png'; ?>" alt="BugSquasher Logo" style="height: 40px; margin-right: 15px;">
+            <div class="bugsquasher-header">
+                <div class="bugsquasher-logo-container">
+                    <img
+                        src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/BugSquasherLogo.png'; ?>"
+                        alt="BugSquasher Logo"
+                        class="bugsquasher-logo"
+                    />
                     <div>
-                        <h1 style="margin: 0 0 5px 0;">BugSquasher</h1>
-                        <p style="margin: 0; color: #555;">Your friendly neighborhood debug log viewer.</p>
+                        <h1 class="bugsquasher-title">BugSquasher</h1>
+                        <p class="bugsquasher-subtitle">Your friendly neighborhood debug log viewer.</p>
                     </div>
                 </div>
-                <div>
+                <div class="bugsquasher-header-actions">
                     <a href="?page=bugsquasher-settings" class="button">Settings</a>
                     <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" class="button">Help</a>
                 </div>
@@ -885,16 +443,19 @@ class BugSquasher
 
                 <div class="bugsquasher-log-container">
                     <div id="error-count">Click "Load Recent Errors" to start</div>
-                    <div id="missing-types-notification" style="display: none;"></div>
-                    <div id="log-content" style="display: none;"></div>
-                    <div id="loading" style="display: none; text-align: center; padding: 40px;">
+                    <div id="missing-types-notification"></div>
+                    <div id="log-content"></div>
+                    <div id="loading">
                         <p>Loading errors...</p>
                     </div>
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px; color: #777;">
-                Presented by <a href="https://stellarpossible.com" target="_blank" style="vertical-align: middle; text-decoration: none;"><img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible" style="height: 20px; vertical-align: middle; margin-left: 5px;"></a>
+            <div class="bugsquasher-footer">
+                Presented by
+                <a href="https://stellarpossible.com" target="_blank">
+                    <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible">
+                </a>
             </div>
         </div>
 <?php
