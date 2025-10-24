@@ -1,9 +1,9 @@
 /* BugSquasher Admin Styles */
 :root {
-    --bs-main: #80A1BA;
-    --bs-second: #91C4C3;
-    --bs-accessory-1: #B4DEBD;
-    --bs-accessory-2: #FFF7DD;
+    --bs-main: #4FA7A2;       /* primary accent */
+    --bs-second: #E9F7F6;     /* cards/widgets */
+    --bs-accessory-1: #F8FAFB;/* app shell */
+    --bs-accessory-2: #CDE3E1;/* light gridlines/borders */
 }
 
 /* Dashboard Header Styles */
@@ -33,6 +33,13 @@
     border-radius: 5px;
 }
 
+/* App shell / body */
+.bugsquasher-container {
+    background: #F8FAFB;
+    border-radius: 6px;
+    padding: 10px;
+}
+
 /* Header and Logo Styles */
 .bugsquasher-header {
     display: flex;
@@ -41,16 +48,25 @@
     justify-content: space-between;
     align-items: center;
     gap: 15px;
-    color: white;
+    color: #ffffff;
     border-radius: 5px;
     margin-bottom: 5px;
     box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
     align-items: center;
-    background: #fff;
-    border: 1px solid #ccd0d4;
+    background: #4FA7A2;
+    border: 1px solid #4FA7A2;
     padding: 15px;
     margin-bottom: 15px;
     height: 10rem; /* fixed header height */
+}
+
+.bugsquasher-title,
+.bugsquasher-subtitle {
+    color: #ffffff;
+}
+
+.bugsquasher-subtitle {
+    opacity: 0.95;
 }
 
 .bugsquasher-logo-container {
@@ -72,40 +88,21 @@
     height: 100%;     /* fill header height */
     max-height: 100%;
     width: auto;      /* maintain aspect ratio */
+    background-color: white;
 }
 
-.bugsquasher-subtitle {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.9;
-    font-style: italic;
+/* Header actions as secondary buttons (white bg, #4FA7A2 border) */
+.bugsquasher-header .button,
+.bugsquasher-header-actions .button {
+    background: #ffffff !important;
+    color: #2C6E6A !important;
+    border-color: #4FA7A2 !important;
 }
-
-.bugsquasher-filters {
-    background: white;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
-}
-
-.filter-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.filter-title-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.bugsquasher-filters h3 {
-    margin: 0;
-    color: #80A1BA;
-    font-weight: 600;
+.bugsquasher-header .button:hover,
+.bugsquasher-header-actions .button:hover {
+    background: #E9F7F6 !important;
+    color: #2C6E6A !important;
+    border-color: #4FA7A2 !important;
 }
 
 /* Select All/Deselect All Button Styles */
@@ -179,9 +176,9 @@
 
 .error-type-filter-btn {
     padding: 8px 12px;
-    border: 1px solid #ccd0d4;
-    background-color: #f6f7f7;
-    color: #50575e;
+    border: 1px solid #4FA7A2;
+    background-color: #ffffff;
+    color: #2C6E6A;
     border-radius: 4px;
     cursor: pointer;
     text-align: center;
@@ -190,44 +187,72 @@
 }
 
 .error-type-filter-btn:hover {
-    background-color: #f0f0f1;
-    border-color: #b4b9be;
+    background-color: #E9F7F6;
+    border-color: #4FA7A2;
+    color: #2C6E6A;
 }
 
 .error-type-filter-btn.active {
-    background-color: #80A1BA;
+    background-color: #2C6E6A;
     color: white;
-    border-color: #80A1BA;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    border-color: #2C6E6A;
+    box-shadow: none;
 }
 
 .error-type-filter-btn.active:hover {
-    background-color: #7191a8;
-    border-color: #7191a8;
+    background-color: #245C58;
+    border-color: #245C58;
 }
 
-@media (max-width: 768px) {
-    .bugsquasher-logo-container {
-        flex-direction: column;
-        text-align: center;
-        gap: 15px;
-    }
+.bugsquasher-filters {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
+}
 
-    .filter-header {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-    }
+.bugsquasher-filters h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #3C467B;
+    font-weight: 600;
+}
 
-    .select-all-btn {
-        width: 100%;
-        margin-top: 10px;
-    }
+/* Primary button (Load Errors) */
+.bugsquasher-controls .button.button-primary,
+#load-errors.button-primary {
+    background: #2C6E6A !important;
+    border-color: #2C6E6A !important;
+    color: #ffffff !important;
+}
+.bugsquasher-controls .button.button-primary:hover,
+#load-errors.button-primary:hover {
+    background: #245C58 !important;
+    border-color: #245C58 !important;
+}
 
-    .filter-buttons {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 8px;
-    }
+/* Secondary buttons (Export, etc.) */
+.bugsquasher-controls .button:not(.button-primary):not(#clear-log) {
+    background: #ffffff !important;
+    color: #2C6E6A !important;
+    border-color: #4FA7A2 !important;
+}
+.bugsquasher-controls .button:not(.button-primary):not(#clear-log):hover {
+    background: #E9F7F6 !important;
+    color: #2C6E6A !important;
+    border-color: #4FA7A2 !important;
+}
+
+/* Danger / Warn button (Clear Log) */
+#clear-log.button {
+    background: #FF8A65 !important;
+    border-color: #FF8A65 !important;
+    color: #ffffff !important;
+}
+#clear-log.button:hover {
+    background: #F76E4E !important;
+    border-color: #F76E4E !important;
 }
 
 .bugsquasher-controls {
@@ -470,8 +495,8 @@ input:disabled+.debug-toggle-slider {
 
 #error-count {
     padding: 10px 15px;
-    background: #f6f7f7;
-    border-bottom: 1px solid #ccd0d4;
+    background: #E9F7F6;
+    border-bottom: 1px solid #CDE3E1;
     font-weight: bold;
 }
 
@@ -507,18 +532,18 @@ input:disabled+.debug-toggle-slider {
 }
 
 .log-entry.warning {
-    border-left-color: #f56e28;
-    background: #fef7f0;
+    border-left-color: #FFB74D;
+    background: #FFF6E8;
 }
 
 .log-entry.notice {
-    border-left-color: #007cba;
-    background: #f0f8ff;
+    border-left-color: #4FA7A2;
+    background: #EBF7F6;
 }
 
 .log-entry.deprecated {
-    border-left-color: #8c8f94;
-    background: #f6f7f7;
+    border-left-color: #9E9E9E;
+    background: #F6F7F7;
 }
 
 /* Misc fallback */
@@ -583,15 +608,15 @@ input:disabled+.debug-toggle-slider {
 }
 
 .log-entry-type.warning {
-    background: #f56e28;
+    background: #FFB74D;
 }
 
 .log-entry-type.notice {
-    background: #007cba;
+    background: #4FA7A2;
 }
 
 .log-entry-type.deprecated {
-    background: #8c8f94;
+    background: #9E9E9E;
 }
 
 /* Misc fallback */
@@ -775,8 +800,8 @@ input:disabled+.debug-toggle-slider {
 /* Header: fixed height and logo sizing */
 .bugsquasher-header {
   align-items: center;
-  background: #fff;
-  border: 1px solid #ccd0d4;
+  background: #4FA7A2;
+  border: 1px solid #4FA7A2;
   padding: 15px;
   margin-bottom: 15px;
   height: 10rem; /* fixed header height */
@@ -864,4 +889,10 @@ input:disabled+.debug-toggle-slider {
   .bugsquasher-logo {
     max-height: 10rem;
   }
+}
+
+/* Hide WP admin notices only on the BugSquasher screen */
+.notice,
+.error {
+  display: none !important;
 }

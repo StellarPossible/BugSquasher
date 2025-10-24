@@ -441,17 +441,17 @@ jQuery(document).ready(function($) {
     // Severity order for consistent label ordering
     const TYPE_ORDER = ['fatal','parse','critical','firewall','error','warning','cron','notice','deprecated','debug','info','misc'];
 
-    // Colors per type (aligned with CSS accents)
+    // Colors per type (aligned with new palette)
     const TYPE_COLORS = {
         fatal: '#d63638',
         parse: '#d63638',
         critical: '#d63638',
         firewall: '#d63638',
         error: '#dba617',
-        warning: '#f56e28',
+        warning: '#FFB74D',     // updated
         cron: '#dba617',
-        notice: '#007cba',
-        deprecated: '#8c8f94',
+        notice: '#4FA7A2',      // updated
+        deprecated: '#9E9E9E',  // updated
         debug: '#8e44ad',
         info: '#72aee6',
         misc: '#8c8f94',
@@ -510,7 +510,6 @@ jQuery(document).ready(function($) {
                         data,
                         backgroundColor: colors,
                         borderWidth: 0,
-                        // Keep bars proportional and not overly thick with few categories
                         maxBarThickness: 28,
                         barPercentage: 0.8,
                         categoryPercentage: 0.8
@@ -519,7 +518,6 @@ jQuery(document).ready(function($) {
             },
             options: {
                 responsive: true,
-                // Fill the fixed-height container set in CSS
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
@@ -532,12 +530,17 @@ jQuery(document).ready(function($) {
                 scales: {
                     x: {
                         ticks: { color: '#50575e' },
-                        grid: { display: false }
+                        grid: {
+                            display: true,           // was false; show light gridlines
+                            color: '#CDE3E1'         // updated
+                        }
                     },
                     y: {
                         beginAtZero: true,
                         ticks: { precision: 0, color: '#50575e' },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
+                        grid: {
+                            color: '#CDE3E1'        // updated
+                        }
                     }
                 }
             }
@@ -608,4 +611,14 @@ jQuery(document).ready(function($) {
             $button.find('.btn-text').text('Select All');
         }
     }
+
+    // Move WP admin notices below the BugSquasher header on this screen
+    (function relocateAdminNotices() {
+        const $host = $('#bugsquasher-admin-notices');
+        if (!$host.length) return;
+        const $notices = $('.wrap > .notice, .wrap > .error, .wrap > .updated, .wrap > .update-nag, .wrap > #message');
+        if ($notices.length) {
+            $host.append($notices);
+        }
+    })();
 });

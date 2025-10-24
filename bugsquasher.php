@@ -357,11 +357,55 @@ class BugSquasher
                         <p class="bugsquasher-subtitle">Your friendly neighborhood debug log viewer.</p>
                     </div>
                 </div>
+
+                <?php
+                // Debug status moved to header
+                $debug_log = $this->get_debug_log_path();
+                $debug_found = ($debug_log && file_exists($debug_log));
+                $debug_size = $debug_found ? size_format(filesize($debug_log)) : null;
+                ?>
+                <div class="bugsquasher-security-status">
+                    <strong>Debug Status</strong>
+                    <div class="status-row">
+                        <span class="status-label">Debug log</span>
+                        <span class="status-value">
+                            <?php
+                                if ($debug_found) {
+                                    echo 'Found (' . esc_html($debug_size) . ')';
+                                } elseif (!$debug_log) {
+                                    echo 'Not configured';
+                                } else {
+                                    echo 'Not found';
+                                }
+                            ?>
+                        </span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">WP_DEBUG</span>
+                        <span class="status-value"><?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'Enabled' : 'Disabled'; ?></span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Path</span>
+                        <span class="status-value"><?php echo $debug_log ? esc_html($debug_log) : '—'; ?></span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">PHP Error Log</span>
+                        <span class="status-value"><?php echo esc_html((string) ini_get('error_log')); ?></span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Log Errors</span>
+                        <span class="status-value"><?php echo ini_get('log_errors') ? 'On' : 'Off'; ?></span>
+                    </div>
+                </div>
+
                 <div class="bugsquasher-header-actions">
                     <a href="?page=bugsquasher-settings" class="button">Settings</a>
                     <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" class="button">Help</a>
                 </div>
             </div>
+
+            <!-- Place admin notices for this page here -->
+            <div id="bugsquasher-admin-notices"></div>
 
             <!-- Toast Container -->
             <div class="bugsquasher-toast-container" id="toast-container"></div>
@@ -392,40 +436,6 @@ class BugSquasher
                     </select>
                     <button id="clear-log" class="button">Clear Log</button>
                     <button id="export-errors" class="button">Export Errors</button>
-
-                    <div class="bugsquasher-info">
-                        <?php
-                        $debug_log = $this->get_debug_log_path();
-                        if ($debug_log && file_exists($debug_log)) {
-                            $size = filesize($debug_log);
-                            $size_formatted = size_format($size);
-                            echo '<span class="status-enabled">Debug log found (' . $size_formatted . ')</span>';
-
-                            // Show debug info if WP_DEBUG is enabled
-                            if (defined('WP_DEBUG') && WP_DEBUG) {
-                                echo '<br><small>WP_DEBUG: Enabled | Path: ' . $debug_log . '</small>';
-                                echo '<br><small>PHP Error Log: ' . ini_get('error_log') . '</small>';
-                                echo '<br><small>Log Errors: ' . (ini_get('log_errors') ? 'On' : 'Off') . '</small>';
-                            }
-                        } else {
-                            if (!$debug_log) {
-                                echo '<span class="status-not-found">Debug log not configured</span>';
-                                if (defined('WP_DEBUG') && WP_DEBUG) {
-                                    echo '<br><small>WP_DEBUG: Enabled</small>';
-                                    echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
-                                    echo '<br><small>Set WP_DEBUG_LOG to true in wp-config.php to enable logging</small>';
-                                }
-                            } else {
-                                echo '<span class="status-not-found">Debug log not found</span>';
-                                if (defined('WP_DEBUG') && WP_DEBUG) {
-                                    echo '<br><small>WP_DEBUG: Enabled | Expected at: ' . $debug_log . '</small>';
-                                    echo '<br><small>WP_DEBUG_LOG: ' . (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? 'Enabled' : 'Disabled') . '</small>';
-                                    echo '<br><small>Check your wp-config.php settings</small>';
-                                }
-                            }
-                        }
-                        ?>
-                    </div>
                 </div>
 
                 <div class="bugsquasher-filters">
