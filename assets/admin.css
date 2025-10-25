@@ -44,17 +44,16 @@
 .bugsquasher-header {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 15px;
-    color: #ffffff;
+    color: #4FA7A2;            /* header text now teal */
+    background: #ffffff;       /* white header background */
+    border: 1px solid #4FA7A2; /* teal border */
     border-radius: 5px;
     margin-bottom: 5px;
     box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
     align-items: center;
-    background: #4FA7A2;
-    border: 1px solid #4FA7A2;
     padding: 15px;
     margin-bottom: 15px;
     height: 10rem; /* fixed header height */
@@ -62,7 +61,7 @@
 
 .bugsquasher-title,
 .bugsquasher-subtitle {
-    color: #ffffff;
+    color: #4FA7A2;
 }
 
 .bugsquasher-subtitle {
@@ -91,18 +90,71 @@
     background-color: white;
 }
 
-/* Header actions as secondary buttons (white bg, #4FA7A2 border) */
+/* Header actions: make buttons dark teal with white text */
 .bugsquasher-header .button,
 .bugsquasher-header-actions .button {
-    background: #ffffff !important;
-    color: #2C6E6A !important;
-    border-color: #4FA7A2 !important;
+    background: #2C6E6A !important;
+    color: #ffffff !important;
+    border-color: #2C6E6A !important;
 }
 .bugsquasher-header .button:hover,
 .bugsquasher-header-actions .button:hover {
-    background: #E9F7F6 !important;
-    color: #2C6E6A !important;
-    border-color: #4FA7A2 !important;
+    background: #245C58 !important;
+    border-color: #245C58 !important;
+}
+
+/* Make the security box inside the header match the new scheme */
+.bugsquasher-header .bugsquasher-security-status {
+    background: #F5FBFB;
+    border: 1px solid #CDE3E1;
+    color: #1F2937; /* darker body text */
+}
+.bugsquasher-header .bugsquasher-security-status strong {
+    color: #0F766E; /* teal-700 */
+    font-weight: 600;
+}
+.bugsquasher-header .bugsquasher-security-status .status-row {
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.bugsquasher-header .bugsquasher-security-status .status-label {
+    color: #475467;
+    font-weight: 600;
+    min-width: 130px;
+}
+.bugsquasher-header .bugsquasher-security-status .status-value {
+    color: #111827;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+/* Inline code appearance inside status values */
+.bugsquasher-header .bugsquasher-security-status code {
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Status pills for booleans */
+.status-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+.status-pill.ok {
+    color: #065F46;
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+}
+.status-pill.bad {
+    color: #B42318;
+    background: #FEF3F2;
+    border: 1px solid #FECDCA;
 }
 
 /* Select All/Deselect All Button Styles */
@@ -289,6 +341,17 @@
 
     .bugsquasher-info small {
         font-size: 10px;
+    }
+
+    .bugsquasher-header {
+        flex-direction: column;   /* stack header content vertically */
+        align-items: stretch;     /* let inner blocks span full width */
+    }
+    .bugsquasher-logo-container {
+        flex-direction: column;   /* stack logo + title vertically */
+        align-items: flex-start;  /* left-align contents */
+        gap: 12px;                /* tighter spacing on mobile */
+        width: 100%;
     }
 }
 
@@ -733,6 +796,17 @@ input:disabled+.debug-toggle-slider {
     .debug-toggles-wrapper {
         padding: 15px !important;
     }
+
+    .bugsquasher-header {
+        flex-direction: column;   /* stack header content vertically */
+        align-items: stretch;     /* let inner blocks span full width */
+    }
+    .bugsquasher-logo-container {
+        flex-direction: column;   /* stack logo + title vertically */
+        align-items: flex-start;  /* left-align contents */
+        gap: 12px;                /* tighter spacing on mobile */
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -800,8 +874,9 @@ input:disabled+.debug-toggle-slider {
 /* Header: fixed height and logo sizing */
 .bugsquasher-header {
   align-items: center;
-  background: #4FA7A2;
-  border: 1px solid #4FA7A2;
+  color: #4FA7A2;              /* ensure inheritance */
+  background: #ffffff;         /* white background */
+  border: 1px solid #4FA7A2;   /* teal border */
   padding: 15px;
   margin-bottom: 15px;
   height: 10rem; /* fixed header height */
@@ -810,6 +885,27 @@ input:disabled+.debug-toggle-slider {
 .bugsquasher-title {
   /* optional: keep default WP heading sizing or customize */
   margin: 0 0 5px 0;
+  font-size: 5rem;
+}
+
+/* Compact "Powered by" above the title */
+.bugsquasher-powered-by {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    line-height: 1;
+    color: #4FA7A2;
+}
+.bugsquasher-powered-by a {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+.bugsquasher-powered-by .spicon {
+    max-width: 18px;
+    height: 18px;
 }
 
 /* Chart card + header */
@@ -837,6 +933,39 @@ input:disabled+.debug-toggle-slider {
 
 .bugsquasher-chart-header small {
   color: #666;
+}
+
+/* Actions on the right side of the Error Overview header */
+.bugsquasher-chart-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Compact icon buttons (cog and question mark) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #CDE3E1;
+  border-radius: 4px;
+  background: #fff;
+  color: #2C6E6A;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
+}
+.icon-btn:hover {
+  background: #E9F7F6;
+  border-color: #4FA7A2;
+  color: #2C6E6A;
+}
+.icon-btn .dashicons {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 /* Fixed-height chart area */
@@ -895,4 +1024,11 @@ input:disabled+.debug-toggle-slider {
 .notice,
 .error {
   display: none !important;
+}
+
+/* Apply only on BugSquasher admin screen */
+body.tools_page_bugsquasher .bugsquasher-title {
+  font-family: 'Wiggly', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-weight: 400;
+  font-size: 5rem; /* ensure 5rem on BugSquasher screen */
 }

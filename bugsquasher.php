@@ -146,6 +146,63 @@ class BugSquasher
             BUGSQUASHER_VERSION
         );
 
+        // Register and enqueue font-face with absolute URLs and cache-busting (best practice)
+        $font_dir     = BUGSQUASHER_PLUGIN_DIR . 'assets/fonts/';
+        $font_url     = BUGSQUASHER_PLUGIN_URL . 'assets/fonts/';
+        $font_files   = array(
+            'woff2' => 'Wiggly.woff2',
+            'woff'  => 'Wiggly.woff',
+            'ttf'   => 'Wiggly.ttf',
+        );
+
+        $src_parts    = array();
+        $preload_url  = '';
+        $preload_type = '';
+
+        foreach (array('woff2', 'woff', 'ttf') as $fmt) {
+            if (! isset($font_files[$fmt])) {
+                continue;
+            }
+            $file = $font_files[$fmt];
+            if (file_exists($font_dir . $file)) {
+                $ver  = filemtime($font_dir . $file);
+                $url  = $font_url . $file . '?ver=' . $ver;
+                $type = ($fmt === 'ttf') ? 'truetype' : $fmt;
+
+                if (! $preload_url) {
+                    $preload_url  = $url;
+                    $preload_type = ($fmt === 'ttf') ? 'font/ttf' : 'font/' . $fmt;
+                }
+                $src_parts[] = "url('{$url}') format('{$type}')";
+            }
+        }
+
+        if ($src_parts) {
+            $font_css = "@font-face {
+  font-family: 'Wiggly';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: " . implode(",\n       ", $src_parts) . ";
+}";
+            wp_register_style('bugsquasher-fonts', false, array(), BUGSQUASHER_VERSION);
+            wp_add_inline_style('bugsquasher-fonts', $font_css);
+            wp_enqueue_style('bugsquasher-fonts');
+        }
+
+        // Preload the preferred font (only on our screen)
+        add_filter('wp_resource_hints', function ($urls, $relation_type) use ($preload_url, $preload_type) {
+            if ($relation_type === 'preload' && is_admin() && isset($_GET['page']) && $_GET['page'] === 'bugsquasher' && $preload_url) {
+                $urls[] = array(
+                    'href'        => $preload_url,
+                    'as'          => 'font',
+                    'type'        => $preload_type,
+                    'crossorigin' => 'anonymous',
+                );
+            }
+            return $urls;
+        }, 10, 2);
+
         // Only enqueue JavaScript - CSS is embedded directly in admin_page() to avoid MIME issues
         wp_enqueue_script(
             'bugsquasher-admin',
@@ -353,8 +410,14 @@ class BugSquasher
                         class="bugsquasher-logo"
                     />
                     <div>
+                        <div class="bugsquasher-powered-by">
+                            Powered by
+                            <a href="https://stellarpossible.com" target="_blank" rel="noopener">
+                                <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible" class="spicon" />
+                            </a>
+                        </div>
                         <h1 class="bugsquasher-title">BugSquasher</h1>
-                        <p class="bugsquasher-subtitle">Your friendly neighborhood debug log viewer.</p>
+                        <p class="bugsquasher-subtitle">Your friendly neighborhood debugger.</p>
                     </div>
                 </div>
 
@@ -382,26 +445,35 @@ class BugSquasher
                     </div>
                     <div class="status-row">
                         <span class="status-label">WP_DEBUG</span>
-                        <span class="status-value"><?php echo (defined('WP_DEBUG') && WP_DEBUG) ? 'Enabled' : 'Disabled'; ?></span>
+                        <span class="status-value">
+                            <?php echo (defined('WP_DEBUG') && WP_DEBUG)
+                                ? '<span class="status-pill ok">Enabled</span>'
+                                : '<span class="status-pill bad">Disabled</span>'; ?>
+                        </span>
                     </div>
                     <div class="status-row">
                         <span class="status-label">Path</span>
-                        <span class="status-value"><?php echo $debug_log ? esc_html($debug_log) : '—'; ?></span>
+                        <span class="status-value">
+                            <?php echo $debug_log ? '<code>' . esc_html($debug_log) . '</code>' : '—'; ?>
+                        </span>
                     </div>
                     <div class="status-row">
                         <span class="status-label">PHP Error Log</span>
-                        <span class="status-value"><?php echo esc_html((string) ini_get('error_log')); ?></span>
+                        <span class="status-value">
+                            <?php $php_log = (string) ini_get('error_log'); echo $php_log ? '<code>' . esc_html($php_log) . '</code>' : '—'; ?>
+                        </span>
                     </div>
                     <div class="status-row">
                         <span class="status-label">Log Errors</span>
-                        <span class="status-value"><?php echo ini_get('log_errors') ? 'On' : 'Off'; ?></span>
+                        <span class="status-value">
+                            <?php echo ini_get('log_errors')
+                                ? '<span class="status-pill ok">On</span>'
+                                : '<span class="status-pill bad">Off</span>'; ?>
+                        </span>
                     </div>
                 </div>
 
-                <div class="bugsquasher-header-actions">
-                    <a href="?page=bugsquasher-settings" class="button">Settings</a>
-                    <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" class="button">Help</a>
-                </div>
+                <?php // Removed header action buttons (moved to Error Overview card) ?>
             </div>
 
             <!-- Place admin notices for this page here -->
@@ -415,7 +487,15 @@ class BugSquasher
                 <div class="bugsquasher-chart-card">
                     <div class="bugsquasher-chart-header">
                         <h3>Error Overview</h3>
-                        <small>Counts reflect current filters</small>
+                        <div class="bugsquasher-chart-actions">
+                            <small>Counts reflect current filters</small>
+                            <a href="?page=bugsquasher-settings" class="icon-btn" title="Settings" aria-label="Settings">
+                                <span class="dashicons dashicons-admin-generic"></span>
+                            </a>
+                            <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" rel="noopener" class="icon-btn" title="Help" aria-label="Help">
+                                <span class="dashicons dashicons-editor-help"></span>
+                            </a>
+                        </div>
                     </div>
                     <div class="bugsquasher-chart-container">
                         <canvas id="errors-bar-chart"></canvas>
@@ -464,12 +544,14 @@ class BugSquasher
                 </div>
             </div>
 
+            <?php /* Removed footer "Powered by" block to avoid duplication
             <div class="bugsquasher-footer">
-                Presented by
+                Powered by
                 <a href="https://stellarpossible.com" target="_blank">
                     <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible">
                 </a>
             </div>
+            */ ?>
         </div>
 <?php
     }
@@ -508,7 +590,7 @@ class BugSquasher
     }
 
     /**
-     * Get debug log status
+     * Get debug status
      */
     private function get_debug_status()
     {
