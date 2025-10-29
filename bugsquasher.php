@@ -514,12 +514,7 @@ class BugSquasher
                             <h3>Error Overview</h3>
                             <div class="bugsquasher-chart-actions">
                                 <small>Counts reflect current filters</small>
-                                <a href="<?php echo esc_url( admin_url('admin.php?page=bugsquasher-settings') ); ?>" class="icon-btn" title="Settings" aria-label="Settings">
-                                    <span class="dashicons dashicons-admin-generic"></span>
-                                </a>
-                                <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" rel="noopener" class="icon-btn" title="Help" aria-label="Help">
-                                    <span class="dashicons dashicons-editor-help"></span>
-                                </a>
+                                <!-- Removed settings and help icons from here -->
                             </div>
                         </div>
 
@@ -870,13 +865,14 @@ class BugSquasher
 
         $errors = $this->parse_debug_log($limit);
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('BugSquasher: Found ' . count($errors) . ' errors');
+        // FIX: Collect all error types from parsed errors
+        $error_types = [];
+        foreach ($errors as $err) {
+            if (isset($err['type']) && !in_array($err['type'], $error_types, true)) {
+                $error_types[] = $err['type'];
+            }
         }
-
-        // Get unique error types and sort them
-        $error_types = array_unique(array_column($errors, 'type'));
-        $sorted_error_types = $this->sort_error_types(array_values($error_types));
+        $sorted_error_types = $this->sort_error_types($error_types);
 
         $data_to_cache = [
             'errors' => $errors,
@@ -1060,7 +1056,7 @@ class BugSquasher
     {
         $errors = [];
         $current_entry = '';
-        $timestamp_pattern = '/^\[\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Z]{3,4}\]/';
+        $timestamp_pattern = '/^\[\d{2}-[A-Zael]{3}-\d{4} \d{2}:\d{2}:\d{2} [A-Z]{3,4}\]/';
         $processed_count = 0;
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -1074,7 +1070,6 @@ class BugSquasher
                 continue;
             }
 
-            // Check if this line starts a new log entry
             if (preg_match($timestamp_pattern, $line)) {
                 // Process previous entry if it exists
                 if (!empty($current_entry)) {
@@ -1084,12 +1079,21 @@ class BugSquasher
                     }
                     $processed_count++;
                 }
-
                 // Start new entry
                 $current_entry = $line;
             } else {
-                // Continue previous entry
-                $current_entry .= "\n" . $line;
+                // If there is no current entry, treat this line as a standalone entry
+                if (empty($current_entry)) {
+                    $processed = $this->process_log_entry($line);
+                    if ($processed && count($errors) < $max_errors) {
+                        $errors[] = $processed;
+                    }
+                    $processed_count++;
+                    $current_entry = '';
+                } else {
+                    // Continue previous entry
+                    $current_entry .= "\n" . $line;
+                }
             }
         }
 
