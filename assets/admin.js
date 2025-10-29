@@ -334,6 +334,27 @@ jQuery(document).ready(function($) {
         window.URL.revokeObjectURL(url);
     }
 
+    // On page load, set the dropdown to the configured default if present
+    (function applyDefaultLimit() {
+        if (window.bugsquasher_ajax && bugsquasher_ajax.default_limit) {
+            var cfg = parseInt(bugsquasher_ajax.default_limit, 10);
+            if (!isNaN(cfg)) {
+                $('#error-limit').val(cfg.toString());
+            }
+        }
+    })();
+
+    // Always use the selected value, falling back to the settings default
+    function getSelectedLimit() {
+        var defaultLimit = (window.bugsquasher_ajax && parseInt(bugsquasher_ajax.default_limit, 10)) || 25;
+        var selected = $('#error-limit').val();
+        // If the dropdown value is not present, use the default
+        if (!selected || isNaN(parseInt(selected, 10))) {
+            return defaultLimit;
+        }
+        return parseInt(selected, 10);
+    }
+
     /**
      * Load errors from server
      */
@@ -341,15 +362,13 @@ jQuery(document).ready(function($) {
         console.log('BugSquasher: Starting to load errors...');
         $('#loading').show();
         $('#log-content').hide();
-        
-        // Get selected limit; fallback to server-configured default if empty
-        var defaultLimit = (window.bugsquasher_ajax && parseInt(bugsquasher_ajax.default_limit, 10)) || 25;
-        var limit = $('#error-limit').val() || defaultLimit;
+
+        var limit = getSelectedLimit();
         console.log('BugSquasher: Loading', limit, 'recent errors');
-        
+
         console.log('BugSquasher: AJAX URL:', bugsquasher_ajax.ajax_url);
         console.log('BugSquasher: Nonce:', bugsquasher_ajax.nonce);
-        
+
         $.ajax({
             url: bugsquasher_ajax.ajax_url,
             type: 'POST',
@@ -386,16 +405,6 @@ jQuery(document).ready(function($) {
             }
         });
     }
-
-    // On page load, set the dropdown to the configured default if present
-    (function applyDefaultLimit() {
-        if (window.bugsquasher_ajax && bugsquasher_ajax.default_limit) {
-            var cfg = parseInt(bugsquasher_ajax.default_limit, 10);
-            if (!isNaN(cfg)) {
-                $('#error-limit').val(cfg.toString());
-            }
-        }
-    })();
 
     // Render errors on page load
     loadErrors();
@@ -635,6 +644,9 @@ jQuery(document).ready(function($) {
 
     // Inline cards updater honors the same default
     (function($) {
+        var allErrors = [];
+        var allTypes = [];
+
         function fetchErrors(limit) {
             return $.post(bugsquasher_ajax.ajax_url, {
                 action: 'bugsquasher_get_errors',
@@ -643,13 +655,119 @@ jQuery(document).ready(function($) {
             });
         }
 
-        function updateCards() {
-            var defaultLimit = (window.bugsquasher_ajax && parseInt(bugsquasher_ajax.default_limit, 10)) || 25;
-            var limitEl = document.getElementById('error-limit');
-            var limit = limitEl ? parseInt(limitEl.value, 10) || defaultLimit : defaultLimit;
-            fetchErrors(limit).done(function(resp) {
-                // ...existing code...
+        function renderStatCards(types, errors) {
+            // ...existing code...
+        }
+
+        function renderFilterButtons(types) {
+            var container = $('#filter-buttons-container');
+            if (!container.length) return;
+            var html = '';
+            types.forEach(function(type) {
+                html += '<button type="button" class="error-type-filter-btn active" data-type="' + type + '">' + type + '</button>';
             });
+            container.html(html);
+            $(document).trigger('bugsquasher:filtersRendered');
+        }
+
+        function renderErrors(errors) {
+            // ...existing code...
+        }
+
+        function updateCardsAndFilters() {
+            // ...existing code...
+        }
+
+        // Initial render on page load
+        $(document).ready(function() {
+            updateCardsAndFilters();
+        });
+
+        // Update on clicking "Load Recent Errors"
+        $(document).on('click', '#load-errors', function() {
+            updateCardsAndFilters();
+        });
+
+        // Update when limit changes
+        $(document).on('change', '#error-limit', function() {
+            updateCardsAndFilters();
+        });
+
+        // --- Select All Button Logic ---
+        function updateSelectAllButtonState() {
+            var $btn = $('#toggle-all-filters');
+            var $filters = $('#filter-buttons-container .error-type-filter-btn');
+            var total = $filters.length;
+            var selected = $filters.filter('.active').length;
+
+            if (selected === 0) {
+                $btn.attr('data-state', 'select').find('.btn-text').text('Select All');
+            } else if (selected === total) {
+                $btn.attr('data-state', 'deselect').find('.btn-text').text('Deselect All');
+            } else {
+                $btn.attr('data-state', 'partial').find('.btn-text').text('Select All');
+            }
+        }
+
+        // Toggle all filters on Select All button click
+        $(document).on('click', '#toggle-all-filters', function(e) {
+            e.preventDefault();
+            var $btn = $(this);
+            var $filters = $('#filter-buttons-container .error-type-filter-btn');
+            var state = $btn.attr('data-state');
+
+            if (state === 'select' || state === 'partial') {
+                $filters.addClass('active');
+            } else if (state === 'deselect') {
+                $filters.removeClass('active');
+            }
+            updateSelectAllButtonState();
+            filterErrorsByActiveTypes();
+        });
+
+        // Individual filter button click
+        $(document).on('click', '#filter-buttons-container .error-type-filter-btn', function(e) {
+            $(this).toggleClass('active');
+            updateSelectAllButtonState();
+            filterErrorsByActiveTypes();
+        });
+
+        // When filters are rendered, update button state
+        $(document).on('bugsquasher:filtersRendered', function() {
+            updateSelectAllButtonState();
+            filterErrorsByActiveTypes();
+        });
+
+        // Filtering logic
+        function filterErrorsByActiveTypes() {
+            var activeTypes = [];
+            $('#filter-buttons-container .error-type-filter-btn.active').each(function() {
+                activeTypes.push($(this).data('type'));
+            });
+
+            // Show/hide log entries based on active filters
+            var $entries = $('#log-content .log-entry');
+            var visibleCount = 0;
+
+            $entries.each(function() {
+                var $entry = $(this);
+                var entryType = $entry.hasClass('log-entry') ? $entry.attr('class').split(' ').filter(function(c){return c !== 'log-entry';})[0] : '';
+                // fallback to data-type if present
+                if (!entryType && $entry.attr('data-type')) {
+                    entryType = $entry.attr('data-type');
+                }
+                if (activeTypes.length === 0 || activeTypes.indexOf(entryType) !== -1) {
+                    $entry.show();
+                    visibleCount++;
+                } else {
+                    $entry.hide();
+                }
+            });
+
+            // Update error count display
+            $('#error-count').text(visibleCount + ' errors shown');
+            updateSelectAllButtonState();
+            renderErrorOverviewChart();
         }
 
         // ...existing code...

@@ -531,7 +531,7 @@ class BugSquasher
                     <div class="bugsquasher-filters">
                         <!-- inline controls inside the filter card -->
                         <div class="filter-controls">
-                            <button id="load-errors" class="button button-primary">Load Recent Errors</button>
+                            <button id="load-errors" class="button button-primary">Load Recent</button>
                             <select id="error-limit">
                                 <option value="25" selected>Show 25 recent</option>
                                 <option value="50">Show 50 recent</option>
@@ -575,6 +575,9 @@ class BugSquasher
             <!-- Inline JS to render stat cards from existing AJAX endpoint -->
             <script>
                 (function($) {
+                    var allErrors = [];
+                    var allTypes = [];
+
                     function fetchErrors(limit) {
                         return $.post(bugsquasher_ajax.ajax_url, {
                             action: 'bugsquasher_get_errors',
@@ -619,14 +622,44 @@ class BugSquasher
                         grid.innerHTML = html;
                     }
 
-                    function updateCards() {
+                    function renderFilterButtons(types) {
+                        var container = $('#filter-buttons-container');
+                        if (!container.length) return;
+                        var html = '';
+                        types.forEach(function(type) {
+                            html += '<button type="button" class="error-type-filter-btn" data-type="' + type + '">' + type + '</button>';
+                        });
+                        container.html(html);
+                        $(document).trigger('bugsquasher:filtersRendered');
+                    }
+
+                    function renderErrors(errors) {
+                        var container = $('#log-content');
+                        if (!container.length) return;
+                        var html = '';
+                        errors.forEach(function(err) {
+                            html += '<div class="log-entry ' + err.type + '">' +
+                                '<div class="log-entry-header">' +
+                                (err.timestamp ? '<span class="log-entry-timestamp">' + err.timestamp + '</span>' : '') +
+                                '<span class="log-entry-type ' + err.type + '">' + err.type + '</span>' +
+                                '</div>' +
+                                '<div class="log-entry-message">' + err.message + '</div>' +
+                                '</div>';
+                        });
+                        container.html(html);
+                        container.show();
+                    }
+
+                    function updateCardsAndFilters() {
                         var limitEl = document.getElementById('error-limit');
                         var limit = limitEl ? parseInt(limitEl.value, 10) || 25 : 25;
                         fetchErrors(limit).done(function(resp) {
                             if (resp && resp.success && resp.data) {
-                                var types = resp.data.error_types || [];
-                                var errors = resp.data.errors || [];
-                                renderStatCards(types, errors);
+                                allTypes = resp.data.error_types || [];
+                                allErrors = resp.data.errors || [];
+                                renderStatCards(allTypes, allErrors);
+                                renderFilterButtons(allTypes);
+                                renderErrors(allErrors);
 
                                 // NEW: Update the header "Debug log: Found (size)" chip using returned file_size
                                 try {
@@ -644,18 +677,81 @@ class BugSquasher
 
                     // Initial render on page load
                     $(document).ready(function() {
-                        updateCards();
+                        updateCardsAndFilters();
                     });
 
                     // Update on clicking "Load Recent Errors"
                     $(document).on('click', '#load-errors', function() {
-                        updateCards();
+                        updateCardsAndFilters();
                     });
 
                     // Update when limit changes
                     $(document).on('change', '#error-limit', function() {
-                        updateCards();
+                        updateCardsAndFilters();
                     });
+
+                    // --- Select All Button Logic ---
+                    function updateSelectAllButtonState() {
+                        var $btn = $('#toggle-all-filters');
+                        var $filters = $('#filter-buttons-container .error-type-filter-btn');
+                        var total = $filters.length;
+                        var selected = $filters.filter('.active').length;
+
+                        if (selected === 0) {
+                            $btn.attr('data-state', 'select').find('.btn-text').text('Select All');
+                        } else if (selected === total) {
+                            $btn.attr('data-state', 'deselect').find('.btn-text').text('Deselect All');
+                        } else {
+                            $btn.attr('data-state', 'partial').find('.btn-text').text('Select All');
+                        }
+                    }
+
+                    // Toggle all filters on Select All button click
+                    $(document).on('click', '#toggle-all-filters', function(e) {
+                        e.preventDefault();
+                        var $btn = $(this);
+                        var $filters = $('#filter-buttons-container .error-type-filter-btn');
+                        var state = $btn.attr('data-state');
+
+                        if (state === 'select' || state === 'partial') {
+                            $filters.addClass('active');
+                        } else if (state === 'deselect') {
+                            $filters.removeClass('active');
+                        }
+                        updateSelectAllButtonState();
+                        filterErrorsByActiveTypes();
+                    });
+
+                    // Individual filter button click
+                    $(document).on('click', '#filter-buttons-container .error-type-filter-btn', function(e) {
+                        $(this).toggleClass('active');
+                        updateSelectAllButtonState();
+                        filterErrorsByActiveTypes();
+                    });
+
+                    // When filters are rendered, update button state
+                    $(document).on('bugsquasher:filtersRendered', function() {
+                        updateSelectAllButtonState();
+                        filterErrorsByActiveTypes();
+                    });
+
+                    // Filtering logic
+                    function filterErrorsByActiveTypes() {
+                        var activeTypes = [];
+                        $('#filter-buttons-container .error-type-filter-btn.active').each(function() {
+                            activeTypes.push($(this).data('type'));
+                        });
+                        var filtered = [];
+                        if (activeTypes.length === 0) {
+                            filtered = allErrors;
+                        } else {
+                            filtered = allErrors.filter(function(err) {
+                                return activeTypes.indexOf(err.type) !== -1;
+                            });
+                        }
+                        renderErrors(filtered);
+                        $('#error-count').text(filtered.length + ' errors shown');
+                    }
 
                     // NEW: Clear Log handler -> clear server-side then refresh everything client-side
                     $(document).on('click', '#clear-log', function(e) {
@@ -675,7 +771,7 @@ class BugSquasher
                                 $('#filter-buttons-container').html('<p>Load errors to see available filters.</p>');
 
                                 // Refresh stat cards and any listeners bound to load-errors
-                                updateCards();
+                                updateCardsAndFilters();
                                 $('#load-errors').trigger('click');
 
                                 // Let any external script know
@@ -726,6 +822,51 @@ class BugSquasher
                             if (toast.parentNode === container) container.removeChild(toast);
                         }, 3000);
                     }
+
+                    // --- Select All Button Logic ---
+                    function updateSelectAllButtonState() {
+                        var $btn = $('#toggle-all-filters');
+                        var $filters = $('#filter-buttons-container .error-type-filter-btn');
+                        var total = $filters.length;
+                        var selected = $filters.filter('.active').length;
+
+                        if (selected === 0) {
+                            $btn.attr('data-state', 'select').find('.btn-text').text('Select All');
+                        } else if (selected === total) {
+                            $btn.attr('data-state', 'deselect').find('.btn-text').text('Deselect All');
+                        } else {
+                            $btn.attr('data-state', 'partial').find('.btn-text').text('Select All');
+                        }
+                    }
+
+                    // Toggle all filters on Select All button click
+                    $(document).on('click', '#toggle-all-filters', function(e) {
+                        e.preventDefault();
+                        var $btn = $(this);
+                        var $filters = $('#filter-buttons-container .error-type-filter-btn');
+                        var state = $btn.attr('data-state');
+
+                        if (state === 'select' || state === 'partial') {
+                            $filters.addClass('active');
+                        } else if (state === 'deselect') {
+                            $filters.removeClass('active');
+                        }
+                        updateSelectAllButtonState();
+                        filterErrorsByActiveTypes();
+                    });
+
+                    // Individual filter button click
+                    $(document).on('click', '#filter-buttons-container .error-type-filter-btn', function(e) {
+                        $(this).toggleClass('active');
+                        updateSelectAllButtonState();
+                        filterErrorsByActiveTypes();
+                    });
+
+                    // When filters are rendered, update button state
+                    $(document).on('bugsquasher:filtersRendered', function() {
+                        updateSelectAllButtonState();
+                        filterErrorsByActiveTypes();
+                    });
                 })(jQuery);
             </script>
         </div>
