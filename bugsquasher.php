@@ -129,15 +129,6 @@ class BugSquasher
             return;
         }
 
-        // Enqueue Chart.js (CDN) and make admin.js depend on it
-        wp_enqueue_script(
-            'chartjs',
-            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-            array(),
-            '4.4.0',
-            true
-        );
-
         // Enqueue our stylesheet
         wp_enqueue_style(
             'bugsquasher-admin',
@@ -207,7 +198,7 @@ class BugSquasher
         wp_enqueue_script(
             'bugsquasher-admin',
             BUGSQUASHER_PLUGIN_URL . 'assets/admin.js',
-            array('jquery', 'chartjs'),
+            array('jquery'), // dropped chartjs dependency
             BUGSQUASHER_VERSION,
             true
         );
@@ -404,76 +395,70 @@ class BugSquasher
         <div class="wrap">
             <div class="bugsquasher-header">
                 <div class="bugsquasher-logo-container">
+                    <!-- Mobile-only powered by shown above the logo in column layout -->
+                    <div class="bugsquasher-powered-by bugsquasher-powered-by--mobile">
+                        Powered by
+                        <a href="https://stellarpossible.com" target="_blank" rel="noopener">
+                            <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible" class="spicon" />
+                        </a>
+                    </div>
                     <img
                         src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/BugSquasherLogo.png'; ?>"
                         alt="BugSquasher Logo"
-                        class="bugsquasher-logo"
-                    />
-                    <div>
-                        <div class="bugsquasher-powered-by">
+                        class="bugsquasher-logo" />
+                    <div class="header-title-wrapper">
+                        <div class="bugsquasher-powered-by bugsquasher-powered-by--desktop">
                             Powered by
                             <a href="https://stellarpossible.com" target="_blank" rel="noopener">
                                 <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible" class="spicon" />
                             </a>
                         </div>
-                        <h1 class="bugsquasher-title">BugSquasher</h1>
+                        <div class="bugsquasher-title">BugSquasher</div>
                         <p class="bugsquasher-subtitle">Your friendly neighborhood debugger.</p>
                     </div>
                 </div>
 
                 <?php
                 // Debug status moved to header
-                $debug_log = $this->get_debug_log_path();
+                $debug_log   = $this->get_debug_log_path();
                 $debug_found = ($debug_log && file_exists($debug_log));
-                $debug_size = $debug_found ? size_format(filesize($debug_log)) : null;
+                $debug_size  = $debug_found ? size_format(filesize($debug_log)) : null;
+
+                $wp_debug_enabled   = (defined('WP_DEBUG') && WP_DEBUG);
+                $log_errors_enabled = (bool) ini_get('log_errors');
+                $php_log            = (string) ini_get('error_log');
                 ?>
                 <div class="bugsquasher-security-status">
                     <strong>Debug Status</strong>
-                    <div class="status-row">
-                        <span class="status-label">Debug log</span>
-                        <span class="status-value">
-                            <?php
-                                if ($debug_found) {
-                                    echo 'Found (' . esc_html($debug_size) . ')';
-                                } elseif (!$debug_log) {
-                                    echo 'Not configured';
-                                } else {
-                                    echo 'Not found';
-                                }
-                            ?>
+                    <div class="debug-status-container">
+                        <span class="status-chip <?php echo $debug_found ? 'ok' : 'bad'; ?>">
+                            Debug log: <?php
+                                        if ($debug_found) {
+                                            echo 'Found (' . esc_html($debug_size) . ')';
+                                        } elseif (! $debug_log) {
+                                            echo 'Not configured';
+                                        } else {
+                                            echo 'Not found';
+                                        }
+                                        ?>
                         </span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">WP_DEBUG</span>
-                        <span class="status-value">
-                            <?php echo (defined('WP_DEBUG') && WP_DEBUG)
-                                ? '<span class="status-pill ok">Enabled</span>'
-                                : '<span class="status-pill bad">Disabled</span>'; ?>
+                        <span class="status-chip <?php echo $wp_debug_enabled ? 'ok' : 'bad'; ?>">
+                            WP_DEBUG: <?php echo $wp_debug_enabled ? 'Enabled' : 'Disabled'; ?>
                         </span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Path</span>
-                        <span class="status-value">
-                            <?php echo $debug_log ? '<code>' . esc_html($debug_log) . '</code>' : '—'; ?>
+                        <span class="status-chip neutral">
+                            Path: <?php echo $debug_log ? '<code>' . esc_html($debug_log) . '</code>' : '—'; ?>
                         </span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">PHP Error Log</span>
-                        <span class="status-value">
-                            <?php $php_log = (string) ini_get('error_log'); echo $php_log ? '<code>' . esc_html($php_log) . '</code>' : '—'; ?>
+                        <span class="status-chip neutral">
+                            PHP error_log: <?php echo $php_log ? '<code>' . esc_html($php_log) . '</code>' : '—'; ?>
                         </span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Log Errors</span>
-                        <span class="status-value">
-                            <?php echo ini_get('log_errors')
-                                ? '<span class="status-pill ok">On</span>'
-                                : '<span class="status-pill bad">Off</span>'; ?>
+                        <span class="status-chip <?php echo $log_errors_enabled ? 'ok' : 'bad'; ?>">
+                            Log Errors: <?php echo $log_errors_enabled ? 'On' : 'Off'; ?>
                         </span>
                     </div>
                 </div>
 
-                <?php // Removed header action buttons (moved to Error Overview card) ?>
+                <?php // Removed header action buttons (moved to Error Overview card) 
+                ?>
             </div>
 
             <!-- Place admin notices for this page here -->
@@ -483,54 +468,63 @@ class BugSquasher
             <div class="bugsquasher-toast-container" id="toast-container"></div>
 
             <div class="bugsquasher-container">
-                <!-- Error Overview chart card -->
-                <div class="bugsquasher-chart-card">
-                    <div class="bugsquasher-chart-header">
-                        <h3>Error Overview</h3>
-                        <div class="bugsquasher-chart-actions">
-                            <small>Counts reflect current filters</small>
-                            <a href="?page=bugsquasher-settings" class="icon-btn" title="Settings" aria-label="Settings">
-                                <span class="dashicons dashicons-admin-generic"></span>
-                            </a>
-                            <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" rel="noopener" class="icon-btn" title="Help" aria-label="Help">
-                                <span class="dashicons dashicons-editor-help"></span>
-                            </a>
+                <div class="bugsquasher-top-grid">
+                    <!-- Error Overview stat cards (replaces bar chart) -->
+                    <div class="bugsquasher-chart-card">
+                        <div class="bugsquasher-chart-header">
+                            <h3>Error Overview</h3>
+                            <div class="bugsquasher-chart-actions">
+                                <small>Counts reflect current filters</small>
+                                <a href="?page=bugsquasher-settings" class="icon-btn" title="Settings" aria-label="Settings">
+                                    <span class="dashicons dashicons-admin-generic"></span>
+                                </a>
+                                <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" rel="noopener" class="icon-btn" title="Help" aria-label="Help">
+                                    <span class="dashicons dashicons-editor-help"></span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="bugsquasher-stats-grid" id="bs-stat-cards" aria-live="polite">
+                            <!-- Stat cards will be populated by JS -->
+                            <div class="bs-stat-card bs-placeholder">
+                                <div class="label">Loading...</div>
+                                <div class="count">—</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="bugsquasher-chart-container">
-                        <canvas id="errors-bar-chart"></canvas>
-                    </div>
-                </div>
 
-                <div class="bugsquasher-controls">
-                    <button id="load-errors" class="button button-primary">Load Recent Errors</button>
-                    <select id="error-limit">
-                        <option value="25" selected>Show 25 recent</option>
-                        <option value="50">Show 50 recent</option>
-                        <option value="100">Show 100 recent</option>
-                        <option value="250">Show 250 recent</option>
-                        <option value="500">Show 500 recent</option>
-                        <option value="1000">Show 1,000 recent</option>
-                        <option value="2000">Show 2,000 recent</option>
-                        <option value="3000">Show 3,000 recent (max)</option>
-                    </select>
-                    <button id="clear-log" class="button">Clear Log</button>
-                    <button id="export-errors" class="button">Export Errors</button>
-                </div>
-
-                <div class="bugsquasher-filters">
-                    <div class="filter-header">
-                        <div class="filter-title-container">
-                            <span class="dashicons dashicons-filter"></span>
-                            <h3>Filter by Error Type</h3>
+                    <!-- Moved: Filter by Error Type card next to Error Overview -->
+                    <div class="bugsquasher-filters">
+                        <!-- inline controls inside the filter card -->
+                        <div class="filter-controls">
+                            <button id="load-errors" class="button button-primary">Load Recent Errors</button>
+                            <select id="error-limit">
+                                <option value="25" selected>Show 25 recent</option>
+                                <option value="50">Show 50 recent</option>
+                                <option value="100">Show 100 recent</option>
+                                <option value="250">Show 250 recent</option>
+                                <option value="500">Show 500 recent</option>
+                                <option value="1000">Show 1,000 recent</option>
+                                <option value="2000">Show 2,000 recent</option>
+                                <option value="3000">Show 3,000 recent (max)</option>
+                            </select>
+                            <button id="clear-log" class="button">Clear Log</button>
+                            <button id="export-errors" class="button">Export Errors</button>
                         </div>
-                        <button id="toggle-all-filters" class="button select-all-btn" data-state="select">
-                            <span class="btn-text">Select All</span>
-                        </button>
-                    </div>
-                    <div class="filter-buttons" id="filter-buttons-container">
-                        <!-- Filter buttons will be dynamically inserted here -->
-                        <p>Load errors to see available filters.</p>
+                        <div class="filter-header">
+                            <div class="filter-title-container">
+                                <span class="dashicons dashicons-filter"></span>
+                                <h3>Filter by Error Type</h3>
+                            </div>
+                            <button id="toggle-all-filters" class="button select-all-btn" data-state="select">
+                                <span class="btn-text">Select All</span>
+                            </button>
+                        </div>
+
+                        <div class="filter-buttons" id="filter-buttons-container">
+                            <!-- Filter buttons will be dynamically inserted here -->
+                            <p>Load errors to see available filters.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -544,14 +538,81 @@ class BugSquasher
                 </div>
             </div>
 
-            <?php /* Removed footer "Powered by" block to avoid duplication
-            <div class="bugsquasher-footer">
-                Powered by
-                <a href="https://stellarpossible.com" target="_blank">
-                    <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible">
-                </a>
-            </div>
-            */ ?>
+            <!-- Inline JS to render stat cards from existing AJAX endpoint -->
+            <script>
+                (function($) {
+                    function fetchErrors(limit) {
+                        return $.post(bugsquasher_ajax.ajax_url, {
+                            action: 'bugsquasher_get_errors',
+                            nonce: bugsquasher_ajax.nonce,
+                            limit: limit
+                        });
+                    }
+
+                    function renderStatCards(types, errors) {
+                        var grid = document.getElementById('bs-stat-cards');
+                        if (!grid) return;
+
+                        // Count by type
+                        var counts = {};
+                        types.forEach(function(t) {
+                            counts[t] = 0;
+                        });
+                        errors.forEach(function(e) {
+                            if (e && e.type && counts.hasOwnProperty(e.type)) {
+                                counts[e.type]++;
+                            }
+                        });
+
+                        // Build cards
+                        var html = '';
+                        types.forEach(function(type) {
+                            var count = counts[type] || 0;
+                            var cls = 'type-' + type;
+                            html += '<div class="bs-stat-card ' + cls + '">' +
+                                '<div class="label">' + type + '</div>' +
+                                '<div class="count">' + (count.toLocaleString ? count.toLocaleString() : count) + '</div>' +
+                                '</div>';
+                        });
+
+                        // Also add a total card (optional)
+                        var total = errors.length || 0;
+                        html = '<div class="bs-stat-card type-total">' +
+                            '<div class="label">total</div>' +
+                            '<div class="count">' + (total.toLocaleString ? total.toLocaleString() : total) + '</div>' +
+                            '</div>' + html;
+
+                        grid.innerHTML = html;
+                    }
+
+                    function updateCards() {
+                        var limitEl = document.getElementById('error-limit');
+                        var limit = limitEl ? parseInt(limitEl.value, 10) || 25 : 25;
+                        fetchErrors(limit).done(function(resp) {
+                            if (resp && resp.success && resp.data) {
+                                var types = resp.data.error_types || [];
+                                var errors = resp.data.errors || [];
+                                renderStatCards(types, errors);
+                            }
+                        });
+                    }
+
+                    // Initial render on page load
+                    $(document).ready(function() {
+                        updateCards();
+                    });
+
+                    // Update on clicking "Load Recent Errors"
+                    $(document).on('click', '#load-errors', function() {
+                        updateCards();
+                    });
+
+                    // Update when limit changes
+                    $(document).on('change', '#error-limit', function() {
+                        updateCards();
+                    });
+                })(jQuery);
+            </script>
         </div>
 <?php
     }

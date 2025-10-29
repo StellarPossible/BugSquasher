@@ -15,7 +15,6 @@
     font-size: 23px;
     font-weight: 400;
     margin: 0;
-    padding: 9px 0 4px 0;
     line-height: 1.3;
 }
 
@@ -37,7 +36,6 @@
 .bugsquasher-container {
     background: #F8FAFB;
     border-radius: 6px;
-    padding: 10px;
 }
 
 /* Header and Logo Styles */
@@ -62,6 +60,9 @@
 .bugsquasher-title,
 .bugsquasher-subtitle {
     color: #4FA7A2;
+}
+.header-title-wrapper {
+    line-height: 1;
 }
 
 .bugsquasher-subtitle {
@@ -155,6 +156,65 @@
     color: #B42318;
     background: #FEF3F2;
     border: 1px solid #FECDCA;
+}
+
+/* Debug Status: pill layout */
+.debug-status-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  background: #f6f7f7;
+  color: #1f2937;
+}
+
+.status-chip.ok {
+  color: #065F46;
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+}
+
+.status-chip.bad {
+  color: #B42318;
+  background: #FEF3F2;
+  border-color: #FECDCA;
+}
+
+.status-chip.neutral {
+  color: #374151;
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+}
+
+.status-chip code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 12px;
+  color: inherit;
+}
+
+/* Mobile polish for status pills */
+@media (max-width: 768px) {
+  .debug-status-container {
+    gap: 6px;
+  }
+  .status-chip {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
 }
 
 /* Select All/Deselect All Button Styles */
@@ -271,6 +331,64 @@
     font-weight: 600;
 }
 
+/* Filter header: title + Select All on one line */
+.bugsquasher-filters .filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bugsquasher-filters .filter-title-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bugsquasher-filters .filter-title-container .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+  color: #2C6E6A;
+}
+
+.bugsquasher-filters .filter-title-container h3 {
+  margin: 0;
+}
+
+.bugsquasher-filters .filter-header .select-all-btn {
+  margin-left: auto;
+}
+
+/* Inline controls inside the Filter card */
+.bugsquasher-filters .filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  background: #F9FCFC;
+  border: 1px solid #CDE3E1;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+/* Optional: make the limit select consistent height with buttons */
+.bugsquasher-filters .filter-controls select#error-limit {
+  height: 32px;
+  line-height: 32px;
+}
+
+/* Allow wrap on very small screens */
+@media (max-width: 480px) {
+  .bugsquasher-filters .filter-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}
+
 /* Primary button (Load Errors) */
 .bugsquasher-controls .button.button-primary,
 #load-errors.button-primary {
@@ -346,12 +464,51 @@
     .bugsquasher-header {
         flex-direction: column;   /* stack header content vertically */
         align-items: stretch;     /* let inner blocks span full width */
+        height: auto;             /* override fixed height */
+        min-height: 0;            /* remove min-height constraint */
+        padding: 12px;            /* tighter padding */
+        gap: 12px;                /* reduce gaps */
     }
     .bugsquasher-logo-container {
         flex-direction: column;   /* stack logo + title vertically */
-        align-items: flex-start;  /* left-align contents */
-        gap: 12px;                /* tighter spacing on mobile */
+        align-items: center;      /* center-align contents */
+        text-align: center;
+        gap: 10px;
         width: 100%;
+    }
+    .bugsquasher-logo {
+        max-height: 64px;        /* shrink the logo */
+        height: auto;
+        width: auto;
+    }
+    .bugsquasher-powered-by {
+        display: none;
+    }
+    .bugsquasher-title,
+    .bugsquasher-subtitle {
+        text-align: center;
+    }
+
+    .bugsquasher-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+    .bugsquasher-header .bugsquasher-security-status {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bugsquasher-title {
+        font-size: 2rem; /* further reduce on very small screens */
+    }
+    .bugsquasher-subtitle {
+        font-size: 0.95rem;
+    }
+    .bugsquasher-logo {
+        max-height: 56px;
     }
 }
 
@@ -803,23 +960,8 @@ input:disabled+.debug-toggle-slider {
     }
     .bugsquasher-logo-container {
         flex-direction: column;   /* stack logo + title vertically */
-        align-items: flex-start;  /* left-align contents */
         gap: 12px;                /* tighter spacing on mobile */
         width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .debug-toggles-grid {
-        gap: 10px !important;
-    }
-
-    .debug-toggle-item {
-        padding: 12px 8px !important;
-    }
-
-    .debug-toggle-item label {
-        font-size: 14px;
     }
 }
 
@@ -908,6 +1050,14 @@ input:disabled+.debug-toggle-slider {
     height: 18px;
 }
 
+/* Desktop/Mobile variants */
+.bugsquasher-powered-by--mobile {
+    display: none;
+}
+.bugsquasher-powered-by--desktop {
+    display: inline-flex;
+}
+
 /* Chart card + header */
 .bugsquasher-chart-card {
   background: #fff;
@@ -933,6 +1083,8 @@ input:disabled+.debug-toggle-slider {
 
 .bugsquasher-chart-header small {
   color: #666;
+  line-height: 1.2;
+  text-align: center;
 }
 
 /* Actions on the right side of the Error Overview header */
@@ -1018,6 +1170,17 @@ input:disabled+.debug-toggle-slider {
   .bugsquasher-logo {
     max-height: 10rem;
   }
+  .bugsquasher-logo-container {
+    align-items: center; /* ensure centered column stack */
+  }
+  /* Show mobile powered-by above logo; hide desktop variant */
+  .bugsquasher-powered-by--mobile {
+    display: inline-flex;
+    align-self: center; /* center within column stack */
+  }
+  .bugsquasher-powered-by--desktop {
+    display: none;
+  }
 }
 
 /* Hide WP admin notices only on the BugSquasher screen */
@@ -1030,5 +1193,86 @@ input:disabled+.debug-toggle-slider {
 body.tools_page_bugsquasher .bugsquasher-title {
   font-family: 'Wiggly', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   font-weight: 400;
-  font-size: 5rem; /* ensure 5rem on BugSquasher screen */
+  font-size: 4rem; /* ensure 5rem on BugSquasher screen */
+}
+
+/* Stat Cards grid (replaces bar chart) */
+.bugsquasher-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 columns desktop */
+  gap: 12px;
+}
+
+@media (max-width: 782px) {
+  .bugsquasher-stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns mobile */
+  }
+}
+
+.bs-stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border: 1px solid #CDE3E1;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(145, 196, 195, 0.15);
+}
+
+.bs-stat-card .label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: #475467;
+  margin-bottom: 6px;
+}
+
+.bs-stat-card .count {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+  color: #2C6E6A;
+}
+
+/* Placeholder state */
+.bs-stat-card.bs-placeholder .label { opacity: 0.6; }
+.bs-stat-card.bs-placeholder .count { opacity: 0.35; }
+
+/* Type accents */
+.bs-stat-card.type-total { border-left: 4px solid #3C467B; }
+.bs-stat-card.type-fatal,
+.bs-stat-card.type-parse,
+.bs-stat-card.type-critical,
+.bs-stat-card.type-firewall { border-left: 4px solid #d63638; }
+.bs-stat-card.type-warning { border-left: 4px solid #FFB74D; }
+.bs-stat-card.type-notice { border-left: 4px solid #4FA7A2; }
+.bs-stat-card.type-deprecated { border-left: 4px solid #9E9E9E; }
+.bs-stat-card.type-error { border-left: 4px solid #dba617; }
+.bs-stat-card.type-cron { border-left: 4px solid #dba617; }
+.bs-stat-card.type-info { border-left: 4px solid #72aee6; }
+.bs-stat-card.type-debug { border-left: 4px solid #80A1BA; }
+.bs-stat-card.type-misc { border-left: 4px solid #8c8f94; }
+
+/* Top grid: Error Overview + Filters side-by-side on desktop */
+.bugsquasher-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* equal halves */
+  gap: 15px;
+  align-items: stretch; /* make items equal height */
+  margin-bottom: 30px;
+}
+
+/* Remove extra spacing when inside the grid */
+.bugsquasher-top-grid .bugsquasher-chart-card,
+.bugsquasher-top-grid .bugsquasher-filters {
+  margin-bottom: 0;
+  height: 100%; /* ensure the cards fill the grid track height */
+}
+
+@media (max-width: 782px) {
+  .bugsquasher-top-grid {
+    grid-template-columns: 1fr;
+  }
 }
