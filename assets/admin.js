@@ -120,15 +120,16 @@ jQuery(document).ready(function($) {
                 ? escapeHtml(err.timestamps[err.timestamps.length - 1])
                 : '';
 
+            // Improved markup for log-entry card
             return `
-                <div class="log-entry ${type}" data-type="${type}" data-count="${count}">
-                    <div class="log-entry-header">
-                        <span class="log-entry-timestamp">${ts}</span>
+                <section class="log-entry ${type}" data-type="${type}" data-count="${count}" aria-label="${type} error">
+                    <header class="log-entry-header">
+                        ${ts ? `<time class="log-entry-timestamp" datetime="${ts}">${ts}</time>` : ''}
                         <span class="log-entry-type ${type}">${type.toUpperCase()}</span>
-                        ${count > 1 ? `<span class="log-entry-dup-count">×${count}</span>` : ''}
-                    </div>
+                        ${count > 1 ? `<span class="log-entry-dup-count" title="Occurrences">×${count}</span>` : ''}
+                    </header>
                     <div class="log-entry-message">${safeMsg}</div>
-                </div>
+                </section>
             `;
         }).join('');
 
@@ -341,8 +342,9 @@ jQuery(document).ready(function($) {
         $('#loading').show();
         $('#log-content').hide();
         
-        // Get selected limit
-        var limit = $('#error-limit').val() || 50;
+        // Get selected limit; fallback to server-configured default if empty
+        var defaultLimit = (window.bugsquasher_ajax && parseInt(bugsquasher_ajax.default_limit, 10)) || 25;
+        var limit = $('#error-limit').val() || defaultLimit;
         console.log('BugSquasher: Loading', limit, 'recent errors');
         
         console.log('BugSquasher: AJAX URL:', bugsquasher_ajax.ajax_url);
@@ -384,6 +386,16 @@ jQuery(document).ready(function($) {
             }
         });
     }
+
+    // On page load, set the dropdown to the configured default if present
+    (function applyDefaultLimit() {
+        if (window.bugsquasher_ajax && bugsquasher_ajax.default_limit) {
+            var cfg = parseInt(bugsquasher_ajax.default_limit, 10);
+            if (!isNaN(cfg)) {
+                $('#error-limit').val(cfg.toString());
+            }
+        }
+    })();
 
     // Render errors on page load
     loadErrors();
@@ -574,8 +586,7 @@ jQuery(document).ready(function($) {
 
         if (currentState === 'select' || currentState === 'partial') {
             // Select all
-            $buttons.addClass('active');
-            $button.data('state', 'deselect');
+           
             $button.find('.btn-text').text('Deselect All');
         } else {
             // Deselect all
@@ -621,4 +632,26 @@ jQuery(document).ready(function($) {
             $host.append($notices);
         }
     })();
+
+    // Inline cards updater honors the same default
+    (function($) {
+        function fetchErrors(limit) {
+            return $.post(bugsquasher_ajax.ajax_url, {
+                action: 'bugsquasher_get_errors',
+                nonce: bugsquasher_ajax.nonce,
+                limit: limit
+            });
+        }
+
+        function updateCards() {
+            var defaultLimit = (window.bugsquasher_ajax && parseInt(bugsquasher_ajax.default_limit, 10)) || 25;
+            var limitEl = document.getElementById('error-limit');
+            var limit = limitEl ? parseInt(limitEl.value, 10) || defaultLimit : defaultLimit;
+            fetchErrors(limit).done(function(resp) {
+                // ...existing code...
+            });
+        }
+
+        // ...existing code...
+    })(jQuery);
 });

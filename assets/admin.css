@@ -6,6 +6,12 @@
     --bs-accessory-2: #CDE3E1;/* light gridlines/borders */
 }
 
+.wrap {
+    margin: 5px;
+    gap: 5px;
+    display: flex;
+    flex-flow: column;
+}
 /* Dashboard Header Styles */
 .bugsquasher-dashboard-header {
     margin-bottom: 20px;
@@ -44,17 +50,14 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 15px;
-    color: #4FA7A2;            /* header text now teal */
+    gap: 5px;
+    color: #fff; /* changed from #4FA7A2 to white */
     background: #ffffff;       /* white header background */
-    border: 1px solid #4FA7A2; /* teal border */
     border-radius: 5px;
-    margin-bottom: 5px;
     box-shadow: 0 4px 6px rgba(60, 70, 123, 0.1);
     align-items: center;
-    padding: 15px;
-    margin-bottom: 15px;
-    height: 10rem; /* fixed header height */
+    padding: 5px;
+    background-color: rgba(79, 167, 163, 0.444); /* very light teal tint */
 }
 
 .bugsquasher-title,
@@ -64,6 +67,10 @@
 .header-title-wrapper {
     line-height: 1;
 }
+/* Make all text in header-title-wrapper white */
+.header-title-wrapper * {
+    color: #fff !important;
+}
 
 .bugsquasher-subtitle {
     opacity: 0.95;
@@ -72,7 +79,6 @@
 .bugsquasher-logo-container {
     display: flex;
     align-items: center;
-    gap: 20px;
     flex: 1;
 }
 
@@ -88,7 +94,6 @@
     height: 100%;     /* fill header height */
     max-height: 100%;
     width: auto;      /* maintain aspect ratio */
-    background-color: white;
 }
 
 /* Header actions: make buttons dark teal with white text */
@@ -115,19 +120,16 @@
     font-weight: 600;
 }
 .bugsquasher-header .bugsquasher-security-status .status-row {
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 5px;
 }
 .bugsquasher-header .bugsquasher-security-status .status-label {
     color: #475467;
     font-weight: 600;
-    min-width: 130px;
 }
 .bugsquasher-header .bugsquasher-security-status .status-value {
     color: #111827;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+   
 }
 /* Inline code appearance inside status values */
 .bugsquasher-header .bugsquasher-security-status code {
@@ -170,8 +172,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 9999px;
+  padding: 3px;
+  border-radius: 5px;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
@@ -278,6 +280,8 @@
 .select-all-btn .btn-text {
     display: inline-block;
     transition: all 0.2s ease;
+    font-size: 1.25rem;
+    line-height: 1;
 }
 
 .filter-buttons {
@@ -286,22 +290,93 @@
     gap: 10px;
 }
 
-.error-type-filter-btn {
-    padding: 8px 12px;
-    border: 1px solid #4FA7A2;
-    background-color: #ffffff;
-    color: #2C6E6A;
-    border-radius: 4px;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.2s ease;
-    font-weight: 500;
+@media (max-width: 782px) {
+    .filter-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
 }
 
-.error-type-filter-btn:hover {
-    background-color: #E9F7F6;
-    border-color: #4FA7A2;
+@media (max-width: 480px) {
+    .filter-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+}
+
+.error-type-filter-btn {
+    padding: 8px 18px;
+    background: linear-gradient(90deg, #E9F7F6 0%, #CDE3E1 100%);
     color: #2C6E6A;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.15rem;
+    border: none;
+    box-shadow: 0 2px 8px rgba(79, 167, 162, 0.10), 0 1px 2px rgba(60, 70, 123, 0.07);
+    transition: 
+        background 0.18s cubic-bezier(.4,0,.2,1),
+        color 0.18s cubic-bezier(.4,0,.2,1),
+        box-shadow 0.18s cubic-bezier(.4,0,.2,1),
+        transform 0.12s cubic-bezier(.4,0,.2,1);
+    outline: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.error-type-filter-btn:hover,
+.error-type-filter-btn:focus {
+    background: linear-gradient(90deg, #B4DEBD 0%, #E9F7F6 100%);
+    color: #245C58;
+    box-shadow: 0 4px 16px rgba(44, 109, 105, 0.13), 0 1.5px 4px rgba(60, 70, 123, 0.09);
+    border-color: #4FA7A2;
+    transform: translateY(-1px) scale(1.03);
+    z-index: 1;
+}
+
+.error-type-filter-btn:active {
+    background: linear-gradient(90deg, #CDE3E1 0%, #E9F7F6 100%);
+    color: #2C6E6A;
+    box-shadow: 0 1px 4px rgba(44, 109, 105, 0.10);
+    transform: translateY(1px) scale(0.98);
+}
+
+.error-type-filter-btn.active {
+    background: linear-gradient(90deg, #4FA7A2 0%, #2C6E6A 100%);
+    color: #fff;
+    border-color: #2C6E6A;
+    box-shadow: 0 2px 12px rgba(44, 109, 105, 0.18);
+    transform: none;
+}
+
+.error-type-filter-btn.active:hover,
+.error-type-filter-btn.active:focus {
+    background: linear-gradient(90deg, #245C58 0%, #4FA7A2 100%);
+    color: #fff;
+    border-color: #245C58;
+    box-shadow: 0 4px 20px rgba(44, 109, 105, 0.22);
+    transform: translateY(-1px) scale(1.04);
+}
+
+/* Optional: add a subtle ripple effect on click (stellar touch) */
+.error-type-filter-btn:after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 0; height: 0;
+    background: rgba(79,167,162,0.15);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.4s;
+    opacity: 0;
+}
+.error-type-filter-btn:active:after {
+    width: 120%;
+    height: 120%;
+    opacity: 1;
+    transition: width 0.15s ease, height 0.15s ease, opacity 0.2s;
 }
 
 .error-type-filter-btn.active {
@@ -313,14 +388,11 @@
 
 .error-type-filter-btn.active:hover {
     background-color: #245C58;
-    border-color: #245C58;
 }
 
 .bugsquasher-filters {
     background: white;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
+    border-radius: 5px;
     box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
 }
 
@@ -360,32 +432,68 @@
 
 .bugsquasher-filters .filter-header .select-all-btn {
   margin-left: auto;
+  /* Remove any float or block styling that could break flex layout */
+  float: none;
+  display: inline-block;
+  line-height: 1;
 }
 
 /* Inline controls inside the Filter card */
 .bugsquasher-filters .filter-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   background: #F9FCFC;
-  border: 1px solid #CDE3E1;
-  border-radius: 6px;
-  padding: 10px;
+  padding: 4px 5px;
 }
 
-/* Optional: make the limit select consistent height with buttons */
-.bugsquasher-filters .filter-controls select#error-limit {
+/* Ensure filter-controls children are vertically centered */
+.bugsquasher-filters .filter-controls > * {
+  align-self: center;
+  vertical-align: middle;
   height: 32px;
-  line-height: 32px;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
-/* Allow wrap on very small screens */
+/* If you have <p> or text nodes, make them inline-flex and center */
+.bugsquasher-filters .filter-controls p,
+.bugsquasher-filters .filter-controls span,
+.bugsquasher-filters .filter-controls label {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Make select and buttons more compact */
+.bugsquasher-filters .filter-controls select,
+.bugsquasher-filters .filter-controls button {
+  font-size: 0.95rem;
+  padding: 4px 8px;
+  min-width: 0;
+  height: 32px;
+  margin: 0;
+}
+
+/* On mobile: stack vertically, full width */
 @media (max-width: 480px) {
-  .bugsquasher-filters .filter-header {
-    flex-wrap: wrap;
-    row-gap: 8px;
+  .bugsquasher-filters .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 3px 2px;
+  }
+  .bugsquasher-filters .filter-controls select,
+  .bugsquasher-filters .filter-controls button {
+    width: 100%;
+    font-size: 0.95rem;
+    padding: 6px 8px;
+    height: auto;
   }
 }
 
@@ -477,7 +585,6 @@
         width: 100%;
     }
     .bugsquasher-logo {
-        max-height: 64px;        /* shrink the logo */
         height: auto;
         width: auto;
     }
@@ -494,10 +601,6 @@
         opacity: 0.95;
         margin: 0;
     }
-    .bugsquasher-header .bugsquasher-security-status {
-        width: 100%;
-        margin-top: 10px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -506,9 +609,6 @@
     }
     .bugsquasher-subtitle {
         font-size: 0.95rem;
-    }
-    .bugsquasher-logo {
-        max-height: 56px;
     }
 }
 
@@ -662,7 +762,7 @@ input:disabled+.debug-toggle-slider {
 
 .bugsquasher-filters {
     background: white;
-    padding: 15px;
+    padding: 5px;
     border-radius: 6px;
     margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(145, 196, 195, 0.3);
@@ -709,7 +809,6 @@ input:disabled+.debug-toggle-slider {
 
 .bugsquasher-log-container {
     background: #fff;
-    border: 1px solid #ccd0d4;
     min-height: 400px;
 }
 
@@ -730,251 +829,194 @@ input:disabled+.debug-toggle-slider {
 }
 
 .log-entry {
-    margin-bottom: 15px;
-    padding: 10px;
-    border-left: 4px solid #ccc;
-    background: #f9f9f9;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 6px solid #CDE3E1;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(60, 70, 123, 0.07);
+    transition: box-shadow 0.18s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.log-entry.fatal {
-    border-left-color: #d63638;
-    background: #fef2f2;
+.log-entry:hover {
+    box-shadow: 0 4px 16px rgba(60, 70, 123, 0.13);
+    background: #F8FAFB;
 }
 
-.log-entry.parse {
+.log-entry.fatal,
+.log-entry.parse,
+.log-entry.critical,
+.log-entry.firewall {
     border-left-color: #d63638;
-    background: #fef2f2;
-}
-
-.log-entry.critical {
-    border-left-color: #d63638;
-    background: #fef2f2;
 }
 
 .log-entry.warning {
     border-left-color: #FFB74D;
-    background: #FFF6E8;
 }
 
 .log-entry.notice {
     border-left-color: #4FA7A2;
-    background: #EBF7F6;
 }
 
 .log-entry.deprecated {
     border-left-color: #9E9E9E;
-    background: #F6F7F7;
 }
 
-/* Misc fallback */
-.log-entry.misc {
-    border-left-color: #8c8f94;
-    background: #f6f7f7;
-}
-
-.log-entry.firewall {
-    border-left-color: #d63638;
-    background: #fef2f2;
-}
-
+.log-entry.error,
 .log-entry.cron {
     border-left-color: #dba617;
-    background: #fffbf0;
 }
 
 .log-entry.info {
     border-left-color: #72aee6;
-    background: #f0f6fc;
 }
 
-.log-entry.error {
-    border-left-color: #dba617;
-    background: #fffbf0;
+.log-entry.debug {
+    border-left-color: #80A1BA;
 }
 
+.log-entry.misc {
+    border-left-color: #8c8f94;
+}
+
+/* Header: timestamp, type, count */
 .log-entry-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
-    font-size: 11px;
-    color: #666;
+    gap: 10px;
+    font-size: 13px;
+    color: #475467;
+    margin-bottom: 2px;
+    flex-wrap: wrap;
 }
 
-/* Duplicate count badge */
-.log-entry-dup-count {
-    background: #8c8f94;
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    margin-left: 6px;
+.log-entry-timestamp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: #80A1BA;
+    background: #F3F4F6;
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-right: 8px;
+    letter-spacing: 0.02em;
 }
 
 .log-entry-type {
-    background: #666;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    background: #E9F7F6;
+    color: #2C6E6A;
+    letter-spacing: 0.04em;
+    border: 1px solid #CDE3E1;
 }
 
 .log-entry-type.fatal,
 .log-entry-type.parse,
 .log-entry-type.critical,
 .log-entry-type.firewall {
-    background: #d63638;
+    background: #FEF3F2;
+    color: #B42318;
+    border-color: #FECDCA;
 }
 
 .log-entry-type.warning {
-    background: #FFB74D;
+    background: #FFF6E8;
+    color: #B26A00;
+    border-color: #FFB74D;
 }
 
 .log-entry-type.notice {
-    background: #4FA7A2;
+    background: #EBF7F6;
+    color: #4FA7A2;
+    border-color: #4FA7A2;
 }
 
 .log-entry-type.deprecated {
-    background: #9E9E9E;
+    background: #F6F7F7;
+    color: #9E9E9E;
+    border-color: #9E9E9E;
 }
 
-/* Misc fallback */
-.log-entry-type.misc {
-    background: #8c8f94;
+.log-entry-type.error,
+.log-entry-type.cron {
+    background: #FFFBF0;
+    color: #B26A00;
+    border-color: #dba617;
 }
 
 .log-entry-type.info {
-    background: #72aee6;
+    background: #F0F6FC;
+    color: #72aee6;
+    border-color: #72aee6;
 }
 
-.log-entry-type.cron,
-.log-entry-type.error {
-    background: #dba617;
+.log-entry-type.debug {
+    background: #F3F4F6;
+    color: #8e44ad;
+    border-color: #8e44ad;
 }
 
+.log-entry-type.misc {
+    background: #F6F7F7;
+    color: #8c8f94;
+    border-color: #8c8f94;
+}
+
+/* Duplicate count badge */
+.log-entry-dup-count {
+    background: #8c8f94;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+    letter-spacing: 0.03em;
+}
+
+/* Message: improved readability */
 .log-entry-message {
-    word-break: break-all;
-    white-space: pre-wrap;
+    font-size: 15px;
+    color: #1F2937;
+    word-break: break-word;
+    white-space: pre-line;
+    margin-top: 2px;
+    line-height: 1.5;
+    font-family: 'Inter', system-ui, sans-serif;
+    padding-left: 2px;
 }
 
-.no-errors {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-}
-
-.no-errors .dashicons {
-    font-size: 48px;
-    margin-bottom: 10px;
-    color: #00a32a;
-}
-
-#loading {
-    text-align: center;
-    padding: 40px;
-}
-
-/* Toast Notification Styles */
-.bugsquasher-toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    pointer-events: none;
-}
-
-.bugsquasher-toast {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    min-width: 280px;
-    max-width: 400px;
-    opacity: 0;
-    transform: translateX(100%);
-    transition: all 0.3s ease;
-    pointer-events: auto;
-    position: relative;
-}
-
-.bugsquasher-toast.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.bugsquasher-toast.success {
-    border-left: 4px solid #00a32a;
-}
-
-.bugsquasher-toast.error {
-    border-left: 4px solid #d63638;
-}
-
-.bugsquasher-toast.info {
-    border-left: 4px solid #007cba;
-}
-
-.bugsquasher-toast-message {
-    font-size: 14px;
-    line-height: 1.4;
-    margin: 0;
-}
-
-.bugsquasher-toast-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: none;
-    border: none;
-    font-size: 16px;
-    color: #666;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-}
-
-.bugsquasher-toast-close:hover {
-    color: #000;
-}
-
-/* Responsive styles for debug toggles */
-@media (max-width: 768px) {
-    .debug-toggles-grid {
-        grid-template-columns: 1fr !important;
+/* Responsive: stack header elements on small screens */
+@media (max-width: 600px) {
+    .log-entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
-
-    .debug-toggle-item {
-        padding: 15px 10px !important;
+    .log-entry-message {
+        font-size: 14px;
     }
-
-    .debug-toggles-wrapper {
-        padding: 15px !important;
-    }
-
-    .bugsquasher-header {
-        flex-direction: column;   /* stack header content vertically */
-        align-items: stretch;     /* let inner blocks span full width */
-    }
-    .bugsquasher-logo-container {
-        flex-direction: column;   /* stack logo + title vertically */
-        gap: 12px;                /* tighter spacing on mobile */
-        width: 100%;
+    .log-entry {
+        padding: 10px 8px;
     }
 }
 
 /* Security Status Box in Header - Improved layout */
 .bugsquasher-security-status {
     margin: 5px;
-    padding: 10px;
+    padding: 5px;
     background: rgba(240, 246, 252, 0.9);
     border-radius: 5px;
     font-size: 13px;
     line-height: 1.4;
     color: #333;
-    flex: 1;
 }
 
 .bugsquasher-security-status strong {
@@ -1016,12 +1058,8 @@ input:disabled+.debug-toggle-slider {
 /* Header: fixed height and logo sizing */
 .bugsquasher-header {
   align-items: center;
-  color: #4FA7A2;              /* ensure inheritance */
-  background: #ffffff;         /* white background */
-  border: 1px solid #4FA7A2;   /* teal border */
-  padding: 15px;
-  margin-bottom: 15px;
-  height: 10rem; /* fixed header height */
+  color: #fff;              /* ensure inheritance */
+  padding: 5px;
 }
 
 .bugsquasher-title {
@@ -1038,7 +1076,8 @@ input:disabled+.debug-toggle-slider {
     margin: 0 0 6px 0;
     font-size: 12px;
     line-height: 1;
-    color: #4FA7A2;
+    color: rgba(255, 255, 255, 0.9); /* changed from #4FA7A2 to white */
+    font-weight: 600; /* heavier font weight */
 }
 .bugsquasher-powered-by a {
     display: inline-flex;
@@ -1046,8 +1085,7 @@ input:disabled+.debug-toggle-slider {
     text-decoration: none;
 }
 .bugsquasher-powered-by .spicon {
-    max-width: 18px;
-    height: 18px;
+    max-width: 2rem;
 }
 
 /* Desktop/Mobile variants */
@@ -1061,10 +1099,8 @@ input:disabled+.debug-toggle-slider {
 /* Chart card + header */
 .bugsquasher-chart-card {
   background: #fff;
-  border: 1px solid #ccd0d4;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  padding: 15px;
+  border-radius: 5px;
+  padding: 5px;
   box-shadow: 0 4px 8px rgba(145, 196, 195, 0.15);
 }
 
@@ -1163,13 +1199,7 @@ input:disabled+.debug-toggle-slider {
 
 /* Ensure existing layout keeps working on small screens */
 @media (max-width: 768px) {
-  .bugsquasher-header {
-    height: auto;       /* allow natural height on narrow screens */
-    min-height: 10rem;  /* still reserve space for the logo */
-  }
-  .bugsquasher-logo {
-    max-height: 10rem;
-  }
+  
   .bugsquasher-logo-container {
     align-items: center; /* ensure centered column stack */
   }
@@ -1275,4 +1305,107 @@ body.tools_page_bugsquasher .bugsquasher-title {
   .bugsquasher-top-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Ultra-small screens (≤320px) */
+@media (max-width: 320px) {
+  .bugsquasher-title {
+    font-size: 1.5rem;
+  }
+  .bugsquasher-subtitle {
+    font-size: 0.85rem;
+  }
+  .bugsquasher-header,
+  .bugsquasher-logo-container,
+  .bugsquasher-header .bugsquasher-security-status {
+    padding: 4px !important;
+    gap: 4px !important;
+  }
+  .bugsquasher-chart-header h3,
+  .bugsquasher-filters h3 {
+    font-size: 1rem;
+  }
+  .bs-stat-card .count {
+    font-size: 18px;
+  }
+  .bs-stat-card .label {
+    font-size: 10px;
+  }
+  .bugsquasher-controls,
+  .bugsquasher-debug-controls {
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+  .filter-buttons {
+    gap: 6px;
+  }
+  .select-all-btn {
+    min-width: 70px;
+    font-size: 0.9rem;
+    padding: 4px 8px !important;
+  }
+  .bugsquasher-log-container {
+    min-height: 200px;
+    padding: 4px;
+  }
+  #error-count {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  #log-content {
+    padding: 8px;
+    font-size: 11px;
+  }
+}
+
+/* Header bottom row: debug card left, icons right */
+.bugsquasher-header-bottom-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 8px;
+    padding-bottom: 2px;
+}
+
+.bugsquasher-header-bottom-row .bugsquasher-security-status {
+    margin: 0;
+    padding: 0 0 0 2px;
+    background: rgba(240,246,252,0.9);
+    border-radius: 5px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    min-width: 180px;
+    max-width: 320px;
+    box-shadow: none;
+    border: none;
+}
+
+.bugsquasher-header-bottom-row .bugsquasher-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    padding-right: 2px;
+}
+
+.bugsquasher-header-bottom-row .icon-btn {
+    margin: 0;
+    box-shadow: none;
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 768px) {
+  
+    .bugsquasher-header-bottom-row .bugsquasher-header-actions {
+        justify-content: flex-start;
+        padding-right: 0;
+        margin-left: 0;
+    }
+    .bugsquasher-header-bottom-row .bugsquasher-security-status {
+        max-width: 100%;
+        min-width: 0;
+    }
 }

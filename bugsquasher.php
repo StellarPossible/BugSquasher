@@ -33,7 +33,7 @@ class BugSquasher_Config
         'date_format' => 'Y-m-d H:i:s',
         'display_timezone' => true,
         'export_format' => 'detailed',
-        'max_errors_display' => 25,
+        'max_errors_display' => 3000,
         'cache_duration' => 300,
         'error_types_default' => ['fatal', 'parse', 'critical', 'debug'],
         'timestamp_conversion' => true,
@@ -111,11 +111,11 @@ class BugSquasher
             array($this, 'admin_page')
         );
 
-        // Add settings submenu
+        // Register an actual Settings page under Tools so the settings button always works
         add_submenu_page(
-            'bugsquasher',
+            'tools.php',                 // parent: Tools
             'BugSquasher Settings',
-            'Settings',
+            'BugSquasher Settings',
             'manage_options',
             'bugsquasher-settings',
             array($this, 'settings_page')
@@ -124,8 +124,8 @@ class BugSquasher
 
     public function enqueue_admin_assets($hook)
     {
-        // Only load on our admin page
-        if ($hook !== 'tools_page_bugsquasher') {
+        // Load assets on both the main page and the settings page
+        if ($hook !== 'tools_page_bugsquasher' && $hook !== 'tools_page_bugsquasher-settings') {
             return;
         }
 
@@ -206,10 +206,14 @@ class BugSquasher
         // Localize script
         $current_settings = get_option('bugsquasher_settings', BugSquasher_Config::get_default_settings());
         wp_localize_script('bugsquasher-admin', 'bugsquasher_ajax', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('bugsquasher_nonce'),
+            'ajax_url'      => admin_url('admin-ajax.php'),
+            'nonce'         => wp_create_nonce('bugsquasher_nonce'),
             // Pass export format to the client (detailed | compact | markdown_table | markdown_list)
             'export_format' => isset($current_settings['export_format']) ? $current_settings['export_format'] : 'detailed',
+            // New: default load count from settings
+            'default_limit' => isset($current_settings['max_errors_display']) ? (int) $current_settings['max_errors_display'] : 25,
+            // New: settings page url for use in UI if needed
+            'settings_url'  => admin_url('admin.php?page=bugsquasher-settings'),
         ));
     }
 
@@ -220,23 +224,62 @@ class BugSquasher
     {
         // Handle form submission
         if (isset($_POST['submit']) && wp_verify_nonce($_POST['bugsquasher_settings_nonce'], 'bugsquasher_settings')) {
+            // Clamp default errors displayed to 25–3000
+            $max_errors = isset($_POST['max_errors_display']) ? max(25, min(3000, intval($_POST['max_errors_display']))) : 25;
+
             $new_settings = [
                 'timezone' => sanitize_text_field($_POST['timezone']),
                 'date_format' => sanitize_text_field($_POST['date_format']),
                 'display_timezone' => isset($_POST['display_timezone']),
                 'timestamp_conversion' => isset($_POST['timestamp_conversion']),
-                'max_errors_display' => intval($_POST['max_errors_display']),
+                'max_errors_display' => $max_errors,
                 'cache_duration' => intval($_POST['cache_duration']),
                 'export_format' => sanitize_text_field($_POST['export_format'])
             ];
 
             BugSquasher_Config::save_settings($new_settings);
-            echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
+
+            // Redirect back to the main page with a success flag
+            wp_safe_redirect( admin_url('tools.php?page=bugsquasher&bs_saved=1') );
+            exit;
         }
 
         $current_settings = get_option('bugsquasher_settings', BugSquasher_Config::get_default_settings());
 ?>
         <div class="wrap">
+            <!-- Small logo that links back to the main page -->
+            <div style="margin: 10px 0;">
+                <a href="<?php echo esc_url( admin_url('tools.php?page=bugsquasher') ); ?>" title="Back to BugSquasher">
+                    <img src="<?php echo esc_url( BUGSQUASHER_PLUGIN_URL . 'assets/images/BugSquasherLogo.png' ); ?>" alt="BugSquasher" style="height:40px; vertical-align:middle;">
+                </a>
+            </div>
+
+            <?php
+            // Debug Status (moved from header, excluding the "Debug log: Found" chip)
+            $debug_log   = is_string(WP_DEBUG_LOG ?? null) ? WP_DEBUG_LOG : (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG ? WP_CONTENT_DIR . '/debug.log' : false);
+            $wp_debug_enabled   = (defined('WP_DEBUG') && WP_DEBUG);
+            $log_errors_enabled = (bool) ini_get('log_errors');
+            $php_log            = (string) ini_get('error_log');
+            ?>
+            <div class="bugsquasher-security-status" style="margin-bottom:12px;">
+                <strong>Debug Status</strong>
+                <div class="debug-status-container">
+                    <!-- Excluded: Debug log: Found (remains in header) -->
+                    <span class="status-chip <?php echo $wp_debug_enabled ? 'ok' : 'bad'; ?>">
+                        WP_DEBUG: <?php echo $wp_debug_enabled ? 'Enabled' : 'Disabled'; ?>
+                    </span>
+                    <span class="status-chip neutral">
+                        Path: <?php echo $debug_log ? '<code>' . esc_html($debug_log) . '</code>' : '—'; ?>
+                    </span>
+                    <span class="status-chip neutral">
+                        PHP error_log: <?php echo $php_log ? '<code>' . esc_html($php_log) . '</code>' : '—'; ?>
+                    </span>
+                    <span class="status-chip <?php echo $log_errors_enabled ? 'ok' : 'bad'; ?>">
+                        Log Errors: <?php echo $log_errors_enabled ? 'On' : 'Off'; ?>
+                    </span>
+                </div>
+            </div>
+
             <h1>BugSquasher Settings</h1>
             <form method="post" action="">
                 <?php wp_nonce_field('bugsquasher_settings', 'bugsquasher_settings_nonce'); ?>
@@ -308,8 +351,8 @@ class BugSquasher
                     <tr>
                         <th scope="row">Default Errors to Display</th>
                         <td>
-                            <input type="number" name="max_errors_display" value="<?php echo esc_attr($current_settings['max_errors_display']); ?>" min="10" max="500">
-                            <p class="description">Number of errors to display by default (10-500).</p>
+                            <input type="number" name="max_errors_display" value="<?php echo esc_attr($current_settings['max_errors_display']); ?>" min="25" max="3000">
+                            <p class="description">Number of errors to display by default (25-3000).</p>
                         </td>
                     </tr>
 
@@ -391,8 +434,14 @@ class BugSquasher
      */
     public function admin_page()
     {
-    ?>
+        ?>
         <div class="wrap">
+            <?php
+            // Show success notice after saving settings and redirecting back
+            if (!empty($_GET['bs_saved'])) {
+                echo '<div class="notice notice-success is-dismissible"><p>Settings saved successfully.</p></div>';
+            }
+            ?>
             <div class="bugsquasher-header">
                 <div class="bugsquasher-logo-container">
                     <!-- Mobile-only powered by shown above the logo in column layout -->
@@ -402,10 +451,13 @@ class BugSquasher
                             <img src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/spicon.png'; ?>" alt="StellarPossible" class="spicon" />
                         </a>
                     </div>
-                    <img
-                        src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/BugSquasherLogo.png'; ?>"
-                        alt="BugSquasher Logo"
-                        class="bugsquasher-logo" />
+                    <!-- Make the header logo link back to the main page -->
+                    <a href="<?php echo esc_url( admin_url('tools.php?page=bugsquasher') ); ?>" title="BugSquasher Home">
+                        <img
+                            src="<?php echo BUGSQUASHER_PLUGIN_URL . 'assets/images/BugSquasherLogo.png'; ?>"
+                            alt="BugSquasher Logo"
+                            class="bugsquasher-logo" />
+                    </a>
                     <div class="header-title-wrapper">
                         <div class="bugsquasher-powered-by bugsquasher-powered-by--desktop">
                             Powered by
@@ -418,47 +470,34 @@ class BugSquasher
                     </div>
                 </div>
 
-                <?php
-                // Debug status moved to header
-                $debug_log   = $this->get_debug_log_path();
-                $debug_found = ($debug_log && file_exists($debug_log));
-                $debug_size  = $debug_found ? size_format(filesize($debug_log)) : null;
-
-                $wp_debug_enabled   = (defined('WP_DEBUG') && WP_DEBUG);
-                $log_errors_enabled = (bool) ini_get('log_errors');
-                $php_log            = (string) ini_get('error_log');
-                ?>
-                <div class="bugsquasher-security-status">
-                    <strong>Debug Status</strong>
-                    <div class="debug-status-container">
-                        <span class="status-chip <?php echo $debug_found ? 'ok' : 'bad'; ?>">
-                            Debug log: <?php
-                                        if ($debug_found) {
-                                            echo 'Found (' . esc_html($debug_size) . ')';
-                                        } elseif (! $debug_log) {
-                                            echo 'Not configured';
-                                        } else {
-                                            echo 'Not found';
-                                        }
-                                        ?>
-                        </span>
-                        <span class="status-chip <?php echo $wp_debug_enabled ? 'ok' : 'bad'; ?>">
-                            WP_DEBUG: <?php echo $wp_debug_enabled ? 'Enabled' : 'Disabled'; ?>
-                        </span>
-                        <span class="status-chip neutral">
-                            Path: <?php echo $debug_log ? '<code>' . esc_html($debug_log) . '</code>' : '—'; ?>
-                        </span>
-                        <span class="status-chip neutral">
-                            PHP error_log: <?php echo $php_log ? '<code>' . esc_html($php_log) . '</code>' : '—'; ?>
-                        </span>
-                        <span class="status-chip <?php echo $log_errors_enabled ? 'ok' : 'bad'; ?>">
-                            Log Errors: <?php echo $log_errors_enabled ? 'On' : 'Off'; ?>
-                        </span>
+                <!-- New: bottom row in header for debug card (left) and icons (right) -->
+                <div class="bugsquasher-header-bottom-row">
+                    <div class="bugsquasher-security-status">
+                        <strong>Debug Status</strong>
+                        <div class="debug-status-container">
+                            <span class="status-chip <?php echo $debug_found ? 'ok' : 'bad'; ?>">
+                                Debug log: <?php
+                                    if ($debug_found) {
+                                        echo 'Found (' . esc_html($debug_size) . ')';
+                                    } elseif (! $debug_log) {
+                                        echo 'Not configured';
+                                    } else {
+                                        echo 'Not found';
+                                    }
+                                ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="bugsquasher-header-actions">
+                        <a href="<?php echo esc_url( admin_url('admin.php?page=bugsquasher-settings') ); ?>" class="icon-btn" title="Settings" aria-label="Settings">
+                            <span class="dashicons dashicons-admin-generic"></span>
+                        </a>
+                        <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" rel="noopener" class="icon-btn" title="Help" aria-label="Help">
+                            <span class="dashicons dashicons-editor-help"></span>
+                        </a>
                     </div>
                 </div>
-
-                <?php // Removed header action buttons (moved to Error Overview card) 
-                ?>
+                <?php // ...existing code... ?>
             </div>
 
             <!-- Place admin notices for this page here -->
@@ -475,7 +514,7 @@ class BugSquasher
                             <h3>Error Overview</h3>
                             <div class="bugsquasher-chart-actions">
                                 <small>Counts reflect current filters</small>
-                                <a href="?page=bugsquasher-settings" class="icon-btn" title="Settings" aria-label="Settings">
+                                <a href="<?php echo esc_url( admin_url('admin.php?page=bugsquasher-settings') ); ?>" class="icon-btn" title="Settings" aria-label="Settings">
                                     <span class="dashicons dashicons-admin-generic"></span>
                                 </a>
                                 <a href="https://stellarpossible.com/products/bugsquasher/" target="_blank" rel="noopener" class="icon-btn" title="Help" aria-label="Help">
@@ -593,6 +632,17 @@ class BugSquasher
                                 var types = resp.data.error_types || [];
                                 var errors = resp.data.errors || [];
                                 renderStatCards(types, errors);
+
+                                // NEW: Update the header "Debug log: Found (size)" chip using returned file_size
+                                try {
+                                    var size = resp.data.file_size;
+                                    var chip = document.querySelector('.debug-status-container .status-chip');
+                                    if (chip && size) {
+                                        chip.textContent = 'Debug log: Found (' + size + ')';
+                                        chip.classList.remove('bad');
+                                        chip.classList.add('ok');
+                                    }
+                                } catch (e) {}
                             }
                         });
                     }
@@ -611,6 +661,76 @@ class BugSquasher
                     $(document).on('change', '#error-limit', function() {
                         updateCards();
                     });
+
+                    // NEW: Clear Log handler -> clear server-side then refresh everything client-side
+                    $(document).on('click', '#clear-log', function(e) {
+                        e.preventDefault();
+                        var $btn = $(this);
+                        $btn.prop('disabled', true);
+
+                        $.post(bugsquasher_ajax.ajax_url, {
+                            action: 'bugsquasher_clear_log',
+                            nonce: bugsquasher_ajax.nonce
+                        }).done(function(resp) {
+                            if (resp && resp.success) {
+                                // Reset visible areas immediately
+                                $('#log-content').empty();
+                                $('#missing-types-notification').empty();
+                                $('#error-count').text('Log cleared.');
+                                $('#filter-buttons-container').html('<p>Load errors to see available filters.</p>');
+
+                                // Refresh stat cards and any listeners bound to load-errors
+                                updateCards();
+                                $('#load-errors').trigger('click');
+
+                                // Let any external script know
+                                $(document).trigger('bugsquasher:logCleared');
+
+                                // Toast success
+                                try { showToast('success', 'Debug log cleared.'); } catch (e) {}
+                            } else {
+                                // Toast failure
+                                try { showToast('error', (resp && resp.data) ? resp.data : 'Failed to clear debug log'); } catch (e) {}
+                            }
+                        }).fail(function() {
+                            try { showToast('error', 'Failed to clear debug log'); } catch (e) {}
+                        }).always(function() {
+                            $btn.prop('disabled', false);
+                        });
+                    });
+
+                    // NEW: Minimal toast helper leveraging existing CSS
+                    function showToast(type, message) {
+                        var container = document.getElementById('toast-container');
+                        if (!container) return;
+
+                        var toast = document.createElement('div');
+                        toast.className = 'bugsquasher-toast ' + (type || 'info');
+
+                        var msg = document.createElement('p');
+                        msg.className = 'bugsquasher-toast-message';
+                        msg.textContent = message;
+
+                        var close = document.createElement('button');
+                        close.className = 'bugsquasher-toast-close';
+                        close.setAttribute('aria-label', 'Close');
+                        close.innerHTML = '×';
+                        close.addEventListener('click', function() {
+                            if (toast.parentNode === container) container.removeChild(toast);
+                        });
+
+                        toast.appendChild(msg);
+                        toast.appendChild(close);
+                        container.appendChild(toast);
+
+                        requestAnimationFrame(function() {
+                            toast.classList.add('show');
+                        });
+
+                        setTimeout(function() {
+                            if (toast.parentNode === container) container.removeChild(toast);
+                        }, 3000);
+                    }
                 })(jQuery);
             </script>
         </div>
@@ -729,9 +849,11 @@ class BugSquasher
             wp_send_json_error('Debug log file not found');
         }
 
-        // Get limit from request (default 25 for quick loading)
-        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 25;
-        $limit = max(25, min(3000, $limit)); // Between 25 and 3000
+        // Get limit from request (fallback to saved setting)
+        $default_limit = (int) BugSquasher_Config::get_setting('max_errors_display', 25);
+        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : $default_limit;
+        // Clamp to supported range
+        $limit = max(25, min(3000, $limit));
 
         // Check if we have cached results
         $cache_key = 'bugsquasher_errors_' . $limit . '_' . filemtime($log_file);
